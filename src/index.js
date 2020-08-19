@@ -1,9 +1,15 @@
-import { getLibName, getVersion } from "./utils/helper";
+import { warn, debug } from "loglevel";
 
+import { getLibName, getVersion } from "./utils/helper";
 import Transport from "./transport/Transport";
 import { propose } from "./protocol/jsongle";
 import Peer from "./peer/Peer";
+import { setVerboseLog } from "./utils/log";
 
+/**
+ * JSONgle class
+ * Entry point of the library
+ */
 export default class JSONgle {
     constructor(cfg) {
         if (!cfg) {
@@ -15,14 +21,26 @@ export default class JSONgle {
         this._transport = new Transport(cfg.transport);
         this._peer = new Peer(cfg.peer);
     }
+
+    /**
+     * Get the name of the library
+     */
     get name() {
         return this._name;
     }
 
+    /**
+     * Get the version of the library
+     */
     get version() {
         return this._version;
     }
 
+    /**
+     * Call a peer
+     * @param {String} toId A String representing the peer id
+     * @param {String} withMedia A String representing the media. Can be 'audio' or 'video'
+     */
     call(toId, withMedia) {
         const media = withMedia || "audio";
 
@@ -31,13 +49,28 @@ export default class JSONgle {
         }
 
         if (!withMedia) {
-            console.log("No 'withMedia' argument specified - use 'audio' (default value)");
+            warn("No 'withMedia' argument specified - use 'audio' (default value)");
         }
 
-        console.log(`>>> Start a new call to ${toId} using ${media}`);
+        debug(`[call] initiate a new call to ${toId} using ${media}`);
 
         const msg = propose(toId, this._peer.id, media);
 
         this._transport.sendMessage(msg);
+    }
+
+    /**
+     * Register to event 'oncallstatechanged'
+     */
+    set oncallstatechanged(callback) {
+        this._transport.registerCallback("oncallstatechanged", callback);
+    }
+
+    /**
+     * Set verbose log.
+     * True to set log level to verbose, false otherwise
+     */
+    set verboseLog(isVerbose) {
+        setVerboseLog(isVerbose);
     }
 }

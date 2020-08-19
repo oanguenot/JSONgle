@@ -1,7 +1,5 @@
 import { join } from "path";
 
-const include = join(__dirname, "src");
-
 export default {
     entry: "./src/index",
     mode: "development",

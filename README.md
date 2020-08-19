@@ -70,3 +70,31 @@ const jsongle = new JSONGle({
     peer: peerCfg,
 });
 ```
+
+## API
+
+### Methods
+
+#### Call
+
+#### Decline
+
+#### Accept
+
+#### End
+
+### Events
+
+You can subscribe to the following events on the **JSONgle** instance
+
+|        Events        | Description                                            |
+| :------------------: | :----------------------------------------------------- |
+| `oncallstatechanged` | Fired each time there is an update on the current call |
+
+Here is an exemple of registering to an event
+
+```js
+jsongle.oncallstatechanged = (message) => {
+    // The call has changed. Do something with the message received
+};
+```
