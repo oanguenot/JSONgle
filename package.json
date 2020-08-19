@@ -1,0 +1,37 @@
+{
+    "name": "jsongle",
+    "version": "1.0.2",
+    "description": "JSON based library for handling WebRTC Jingle protocol",
+    "main": "dist/JSONgle.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "prebuild": "rimraf dist",
+        "build:dev": "webpack --output-filename JSONgle.js",
+        "build:prod": "webpack --output-filename JSONgle.js -p"
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE.md"
+    ],
+    "author": "Olivier Anguenot <oanguenot@gmail.com>",
+    "license": "MIT",
+    "devDependencies": {
+        "@babel/cli": "7.10.5",
+        "@babel/core": "7.11.1",
+        "@babel/preset-env": "7.11.0",
+        "@babel/register": "7.10.5",
+        "babel-loader": "8.1.0",
+        "rimraf": "3.0.2",
+        "webpack": "4.44.1",
+        "webpack-cli": "3.3.12"
+    },
+    "babel": {
+        "presets": [
+            "@babel/preset-env"
+        ]
+    },
+    "dependencies": {
+        "uuid": "8.3.0"
+    }
+}
