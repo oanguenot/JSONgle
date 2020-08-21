@@ -1,22 +1,11 @@
-import { generateNewCallId } from "../utils/helper";
-
-const MESSAGE_TYPE = {
-    PROPOSE: "PROPOSE",
+export const ACTIONS = {
+    PROPOSE: "session-propose",
+    INFO: "session-info",
+    RETRACT: "session-retract",
+    DECLINE: "session-decline",
+    PROCEED: "session-proceed",
+    ACCEPT: "session-accept",
+    INITIATE: "session-initiate",
+    TERMINATE: "session-terminate",
+    TRANSPORT: "transport_info",
 };
-
-export const propose = (to, from, media) => ({
-    id: generateNewCallId(),
-    from,
-    to,
-    stamp: new Date(),
-    "call-id": generateNewCallId(),
-    media,
-    "message-type": MESSAGE_TYPE.PROPOSE,
-    "additional-data": {
-        "caller-name": "",
-        "caller-photo": "",
-        reason: "",
-    },
-});
-
-export const accept = () => {};
