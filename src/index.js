@@ -1,12 +1,12 @@
-import { warn, debug } from "loglevel";
-
+import { warn } from "loglevel";
 import { getLibName, getVersion } from "./utils/helper";
-import Transport from "./transport/Transport";
+
 import Peer from "./peer/Peer";
+import CallHandler from "./protocol/CallHandler";
 import { setVerboseLog } from "./utils/log";
-import Call from "./protocol/Call";
 import { createStore } from "./data/Store";
-import { reducer, ACTIONS } from "./data/Reducer";
+import { reducer as callReducer } from "./data/CallsReducer";
+import { reducer as peerReducer, PEER_ACTIONS } from "./data/PeerReducer";
 
 /**
  * JSONgle class
@@ -20,9 +20,10 @@ export default class JSONgle {
 
         this._name = getLibName();
         this._version = getVersion();
-        this._store = createStore(reducer);
-        this._transport = new Transport(cfg.transport, this._store);
-        this._store.dispatch({ type: ACTIONS.SET_PEER, payload: new Peer(cfg.peer) });
+        this._callStore = createStore(callReducer);
+        this._peerStore = createStore(peerReducer);
+        this._peerStore.dispatch({ type: PEER_ACTIONS.SET, payload: new Peer(cfg.peer) });
+        this._callHandler = new CallHandler(this._callStore, cfg.transport);
     }
 
     /**
@@ -59,21 +60,31 @@ export default class JSONgle {
             warn("No 'withMedia' argument specified - use 'audio' (default value)");
         }
 
-        debug(`[call] initiate a new call to ${toId} using ${media}`);
-
-        const call = new Call(this._store.getState().peer.id, toId, media);
-        const propose = call.propose(call);
-
-        this._store.dispatch({ type: ACTIONS.NEW_CALL, payload: { call } });
-
-        this._transport.sendMessage(propose);
+        this._callHandler.initiate(this._peerStore.getState().peer.id, toId, media);
     }
 
     /**
      * Register to event 'oncallstatechanged'
+     * Fired when the state of the call has changed
      */
     set oncallstatechanged(callback) {
-        this._transport.registerCallback("oncallstatechanged", callback);
+        this._callHandler.registerCallback("oncallstatechanged", callback);
+    }
+
+    /**
+     * Register to event 'oncall'
+     * Fired when a call has been initiated or received
+     */
+    set oncall(callback) {
+        this._callHandler.registerCallback("oncall", callback);
+    }
+
+    /**
+     * Register to event 'oncallended'
+     * Fired when the current call has been ended (aborded, declined, retracted, disconnected)
+     */
+    set oncallended(callback) {
+        this._callHandler.registerCallback("oncallended", callback);
     }
 
     /**
@@ -85,9 +96,9 @@ export default class JSONgle {
     }
 
     /**
-     * Return the current call
+     * Return the current call or null
      */
     get currentCall() {
-        return this._store.getState().currentCall;
+        return this._callHandler.currentCall;
     }
 }

@@ -1,18 +1,14 @@
-export const ACTIONS = {
-    NEW_CALL: "NEW_CALL",
-    SET_PEER: "SET_PEER",
+export const PEER_ACTIONS = {
+    SET: "SET",
 };
 
 const initialState = {
     peer: null,
-    currentCall: null,
 };
 
 export const reducer = (state = initialState, action) => {
     switch (action.type) {
-        case ACTIONS.NEW_CALL:
-            return { ...state, currentCall: action.payload.call };
-        case ACTIONS.SET_PEER:
+        case PEER_ACTIONS.SET:
             return { ...state, peer: action.payload.peer };
         default:
             return state;

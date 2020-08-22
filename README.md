@@ -71,8 +71,6 @@ const jsongle = new JSONGle({
 });
 ```
 
-## Call-Flow
-
 ## API
 
 ### Methods
@@ -89,14 +87,32 @@ const jsongle = new JSONGle({
 
 You can subscribe to the following events on the **JSONgle** instance
 
-|        Events        | Description                                            |
-| :------------------: | :----------------------------------------------------- |
-| `oncallstatechanged` | Fired each time there is an update on the current call |
+| Events               | Description                                                                                           |
+| :------------------- | :---------------------------------------------------------------------------------------------------- |
+| `oncall`             | Fired when a new call has been received or when a call is initiated.<br>The event contains the `Call` |
+| `oncallstatechanged` | Fired each time there is an update on the current call.<br>The event contains the `Call`              |
+| `oncallended`        | Fired when a call has ended.<br>The event contains the `Call`                                         |
 
 Here is an exemple of registering to an event
 
 ```js
-jsongle.oncallstatechanged = (message) => {
-    // The call has changed. Do something with the message received
+jsongle.oncallstatechanged = (call) => {
+    // The call state has changed. Do something with that call
 };
 ```
+
+## Internal Call Flow
+
+### Action 'session-propose'
+
+### Action 'session-info'
+
+#### With reason 'unreachable' (server)
+
+#### With reason 'trying' (server)
+
+#### With reason 'proposed'
+
+### Action 'session-retract'
+
+...To complete

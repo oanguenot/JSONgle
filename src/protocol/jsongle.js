@@ -1,4 +1,4 @@
-export const ACTIONS = {
+export const JSONGLE_ACTIONS = {
     PROPOSE: "session-propose",
     INFO: "session-info",
     RETRACT: "session-retract",
@@ -7,5 +7,26 @@ export const ACTIONS = {
     ACCEPT: "session-accept",
     INITIATE: "session-initiate",
     TERMINATE: "session-terminate",
-    TRANSPORT: "transport_info",
+    TRANSPORT: "transport-info",
+};
+
+export const SESSION_INFO_REASON = {
+    UNREACHABLE: "unreachable",
+    TRYING: "trying",
+    PROPOSED: "proposed",
+    DISCONNECTED: "disconnected",
+    UNKNOWN_SESSION: "unknown-session",
+};
+
+export const CALL_STATE = {
+    NEW: "new",
+    PROPOSED: "proposed",
+    TRYING: "trying",
+    RINGING: "ringing",
+    ENDED: "ended",
+};
+
+export const ACTIVITY = {
+    FREE: "free",
+    BUSY: "busy",
 };

@@ -1,21 +1,18 @@
 import { debug } from "loglevel";
-import { handle } from "./TransportHandler";
 
 export default class Transport {
-    constructor(transport) {
-        if (!transport) {
+    constructor(cfg, callback, context) {
+        if (!cfg) {
             throw new Error("Missing 'transport' argument - Object containing the transport properties");
         }
-        this._transport = transport.transport;
-        this._name = transport.name;
-
-        this._callbacks = {
-            oncallstatechanged: null,
-        };
+        this._transport = cfg.transport;
+        this._name = cfg.name;
 
         // Define the callback function to use when receiving new messages
         this._transport.in((message) => {
-            handle(message);
+            // TODO: check message integerity: has message.action ?
+            debug(`[transport] <-- Received JSONgle action ${message.action}`);
+            callback.call(context, message);
         });
     }
 
@@ -29,12 +26,5 @@ export default class Transport {
         }
         debug(`[transport] --> Send message ${message["message-type"]}`);
         this._transport.out(message);
-    }
-
-    registerCallback(name, callback) {
-        if (name in this._callbacks) {
-            this._callbacks[name] = callback;
-            debug(`[transport] registered callback ${name}`);
-        }
     }
 }
