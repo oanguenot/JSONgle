@@ -37,7 +37,7 @@ The transport wrapper is in fact a function that embeds your own transport (here
 
 _Note_: If your transport layer allows to use custom event name, it is better to send all the **JSONgle** messages in a separate queue to avoid mixing them with your own events.
 
-Once defined, you can use your transport and define the transport configuration to use.
+Once your wrapper has been defined, you can configure your transport.
 
 ```js
 const io = socketio("<your_host>");
@@ -50,9 +50,9 @@ const transportCfg = {
 
 ### Defining the user identity
 
-As now, the identity of the user is used to dispatch the messages from the server.
+As now, the identity of the user is used to allow the recipient to identify the caller.
 
-You can just use any kinds of unique `id` such as the user database identifier.
+You can use any kinds of unique `id` such as the user database identifier. It will be up to your application to identify that user from your database.
 
 ```js
 const peerCfg = {
@@ -62,7 +62,7 @@ const peerCfg = {
 
 ### Initialize JSONgle
 
-Once your configuration are ok, you can initialize **JSONgle**
+Once the configurations are ok, you can initialize **JSONgle**
 
 ```js
 const jsongle = new JSONGle({
@@ -72,6 +72,8 @@ const jsongle = new JSONGle({
 ```
 
 ## API
+
+JSONgle offers the following methods and events.
 
 ### Methods
 

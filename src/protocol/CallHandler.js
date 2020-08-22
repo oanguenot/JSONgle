@@ -70,7 +70,7 @@ export default class CallHandler {
         this._transport.sendMessage(propose);
     }
 
-    try() {
+    trying() {
         debug(`[call-handler] try current call ${this._currentCall.id}`);
         this._currentCall.trying();
         if (this._callbacks.oncallstatechanged) {
