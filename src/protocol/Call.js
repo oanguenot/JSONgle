@@ -1,9 +1,29 @@
-import { generateNewCallId } from "../utils/helper";
+import { generateNewId } from "../utils/helper";
 import { JSONGLE_ACTIONS, CALL_STATE } from "./jsongle";
+
+const getActionFromState = (state, reason) => {
+    switch (state) {
+        case CALL_STATE.PROPOSED:
+            return JSONGLE_ACTIONS.PROPOSE;
+        case CALL_STATE.ENDED:
+            if (reason === "retracted") {
+                return JSONGLE_ACTIONS.RETRACT;
+            }
+
+            if (reason === "terminated") {
+                return JSONGLE_ACTIONS.TERMINATE;
+            }
+
+            return JSONGLE_ACTIONS.NONE;
+
+        default:
+            return JSONGLE_ACTIONS.NONE;
+    }
+};
 
 export default class Call {
     constructor(caller, callee, media) {
-        this._id = generateNewCallId();
+        this._id = generateNewId();
         this._state = CALL_STATE.NEW;
         this._caller = caller;
         this._callee = callee;
@@ -33,21 +53,60 @@ export default class Call {
         return this._media;
     }
 
+    get isActive() {
+        return this._state === CALL_STATE.ACTIVE;
+    }
+
+    get isInProgress() {
+        return this._state !== CALL_STATE.ACTIVE && this._state !== CALL_STATE.ENDED && this._state !== CALL_STATE.NEW;
+    }
+
     propose() {
         this._state = CALL_STATE.PROPOSED;
+        return this;
+    }
 
+    trying() {
+        this._state = CALL_STATE.TRYING;
+        return this;
+    }
+
+    retract() {
+        this.state = CALL_STATE.ENDED;
+        this.ended = new Date();
+        this._endedReason = "retracted";
+        return this;
+    }
+
+    terminate() {
+        this.state = CALL_STATE.ENDED;
+        this.ended = new Date();
+        this._endedReason = "terminated";
+        return this;
+    }
+
+    abort(reason) {
+        this._state = CALL_STATE.ENDED;
+        this._endedReason = reason;
+        this._ended = new Date();
+        return this;
+    }
+
+    jsongleze() {
         return {
-            id: generateNewCallId(),
+            id: generateNewId(),
             from: this._caller,
             to: this._callee,
             jsongle: {
                 sid: this._id,
-                action: JSONGLE_ACTIONS.PROPOSE,
-                reason: "",
+                action: getActionFromState(this._state, this._endedReason),
+                reason: this._endedReason,
                 initiator: this._caller,
                 responder: this._callee,
                 description: {
-                    stamp: this._initiated,
+                    initiated: this._initiated,
+                    ended: this._ended,
+                    ended_reason: this._endedReason,
                     media: this._media,
                     additional_data: {
                         initiator_name: "",
@@ -57,15 +116,5 @@ export default class Call {
                 },
             },
         };
-    }
-
-    abort(reason) {
-        this._state = CALL_STATE.ENDED;
-        this._endedReason = reason;
-        this._ended = new Date();
-    }
-
-    trying() {
-        this._state = CALL_STATE.TRYING;
     }
 }

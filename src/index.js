@@ -22,7 +22,7 @@ export default class JSONgle {
         this._version = getVersion();
         this._callStore = createStore(callReducer);
         this._peerStore = createStore(peerReducer);
-        this._peerStore.dispatch({ type: PEER_ACTIONS.SET, payload: new Peer(cfg.peer) });
+        this._peerStore.dispatch({ type: PEER_ACTIONS.SET_PEER, payload: { peer: new Peer(cfg.peer) } });
         this._callHandler = new CallHandler(this._callStore, cfg.transport);
     }
 
@@ -46,7 +46,7 @@ export default class JSONgle {
      * @param {String} withMedia A String representing the media. Can be 'audio' or 'video'
      */
     call(toId, withMedia) {
-        if (this._currentCall) {
+        if (this.currentCall) {
             throw Error("Can't initiate a new call - Already have a call");
         }
 
@@ -60,7 +60,20 @@ export default class JSONgle {
             warn("No 'withMedia' argument specified - use 'audio' (default value)");
         }
 
-        this._callHandler.initiate(this._peerStore.getState().peer.id, toId, media);
+        console.log(">>>this._peer", this._peerStore.getState());
+
+        this._callHandler.propose(this._peerStore.getState().peer.id, toId, media);
+    }
+
+    /**
+     * End the current call
+     */
+    end() {
+        if (!this.currentCall) {
+            throw Error("Can't end the call - not in a call");
+        }
+
+        this._callHandler.retractOrTerminate();
     }
 
     /**

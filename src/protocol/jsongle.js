@@ -8,6 +8,7 @@ export const JSONGLE_ACTIONS = {
     INITIATE: "session-initiate",
     TERMINATE: "session-terminate",
     TRANSPORT: "transport-info",
+    NONE: "none",
 };
 
 export const SESSION_INFO_REASON = {
@@ -23,6 +24,7 @@ export const CALL_STATE = {
     PROPOSED: "proposed",
     TRYING: "trying",
     RINGING: "ringing",
+    ACTIVE: "active",
     ENDED: "ended",
 };
 

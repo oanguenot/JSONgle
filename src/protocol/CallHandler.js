@@ -50,46 +50,62 @@ export default class CallHandler {
         }
     }
 
-    initiate(fromId, toId, media) {
-        debug(`[call-handler] initiate a new call to ${toId} using ${media}`);
+    propose(fromId, toId, media) {
+        debug(`[call-handler] 'propose' a new call to ${toId} using ${media}`);
         this._currentCall = new Call(fromId, toId, media);
         debug(`[call-handler] current call ${this._currentCall.id}`);
 
-        if (this._callbacks.oncall) {
-            this._callbacks.oncall(this._currentCall);
+        this.fireOnCall();
+
+        this._callStore.dispatch({ type: CALL_ACTIONS.INITIATE_CALL, payload: {} });
+
+        const proposeMsg = this._currentCall.propose().jsongleze();
+
+        this.fireOnCallStateChanged();
+
+        this._transport.sendMessage(proposeMsg);
+    }
+
+    retractOrTerminate() {
+        if (!this._currentCall.isInProgress && !this._currentCall.isActive) {
+            debug(`[call-handler] current call ${this._currentCall.id} is not in progress or active`);
+            this.abort("incorrect-state");
+            return;
         }
 
-        this._callStore.dispatch({ type: CALL_ACTIONS.INITIATE, payload: {} });
-
-        const propose = this._currentCall.propose();
-
-        if (this._callbacks.oncallstatechanged) {
-            this._callbacks.oncallstatechanged(this._currentCall);
+        if (this._currentCall.isInProgress) {
+            debug(`[call-handler] 'retract' current call ${this._currentCall.id}`);
+            this._currentCall.retract();
+        } else {
+            debug(`[call-handler] 'terminate' current call ${this._currentCall.id}`);
+            this._currentCall.terminate();
         }
 
-        this._transport.sendMessage(propose);
+        const msg = this._currentCall.jsongleze();
+
+        this.fireOnCallStateChanged();
+        this.fireOnCallEnded();
+
+        this._transport.sendMessage(msg);
+
+        this._callStore.dispatch({ type: CALL_ACTIONS.RELEASE_CALL, payload: {} });
+        this._currentCall = null;
     }
 
     trying() {
-        debug(`[call-handler] try current call ${this._currentCall.id}`);
+        debug(`[call-handler] 'try' current call ${this._currentCall.id}`);
         this._currentCall.trying();
-        if (this._callbacks.oncallstatechanged) {
-            this._callbacks.oncallstatechanged(this._currentCall);
-        }
+        this.fireOnCallStateChanged();
     }
 
     abort(reason) {
-        debug(`[call-handler] abord current call ${this._currentCall.id}`);
+        debug(`[call-handler] 'abort' current call ${this._currentCall.id}`);
         this._currentCall.abort(reason);
-        if (this._callbacks.oncallended) {
-            this._callbacks.oncallended(this._currentCall);
-        }
 
-        if (this._callbacks.oncallstatechanged) {
-            this._callbacks.oncallstatechanged(this._currentCall);
-        }
+        this.fireOnCallStateChanged();
+        this.fireOnCallEnded();
 
-        this._callStore.dispatch({ type: CALL_ACTIONS.RELEASE, payload: {} });
+        this._callStore.dispatch({ type: CALL_ACTIONS.RELEASE_CALL, payload: {} });
         this._currentCall = null;
     }
 
@@ -97,6 +113,24 @@ export default class CallHandler {
         if (name in this._callbacks) {
             this._callbacks[name] = callback;
             debug(`[call-handler] registered callback ${name}`);
+        }
+    }
+
+    fireOnCallStateChanged() {
+        if (this._callbacks.oncallstatechanged) {
+            this._callbacks.oncallstatechanged(this._currentCall);
+        }
+    }
+
+    fireOnCall() {
+        if (this._callbacks.oncall) {
+            this._callbacks.oncall(this._currentCall);
+        }
+    }
+
+    fireOnCallEnded() {
+        if (this._callbacks.oncallended) {
+            this._callbacks.oncallended(this._currentCall);
         }
     }
 }
