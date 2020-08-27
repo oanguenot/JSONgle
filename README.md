@@ -2,7 +2,7 @@
 
 ## Introduction
 
-**JSONgle** is a JavaScript library that proposes an agnostic transport implementation of the Jingle signaling protocol for WebRTC calls based on JSON messages.
+**JSONgle** is a JavaScript library that proposes an agnostic transport implementation based and adapted from the Jingle signaling protocol for WebRTC calls based on JSON messages.
 
 Goal is that an application can use its existing server to exchange the signaling messages between peers but relies on **JSONgle** for the content of these messages.
 
