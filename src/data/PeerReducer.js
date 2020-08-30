@@ -1,20 +1,25 @@
 import { info, warn } from "../utils/log";
 
 export const PEER_ACTIONS = {
-    SET_PEER: "SET",
+    SET_PEER: "SET-PEER",
 };
 
 const initialState = {
     peer: null,
 };
 
+const moduleName = "reducer:peer";
+
 export const reducer = (state = initialState, action) => {
     switch (action.type) {
         case PEER_ACTIONS.SET_PEER:
-            info(`[reducer::peer] execute ${action.type} and set peer to ${JSON.stringify(action.payload.peer)}`);
+            info(moduleName, `execute action '${action.type}' for pid '${action.payload.peer.id}'`);
             return { ...state, peer: action.payload.peer };
+        case "@@redux/INIT":
+            info(moduleName, "initialized successfully");
+            return state;
         default:
-            warn(`[reducer::peer] unhandled action ${action.type}`);
+            warn(moduleName, `unhandled action '${action.type}'`);
             return state;
     }
 };

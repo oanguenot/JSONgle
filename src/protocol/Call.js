@@ -58,11 +58,16 @@ export default class Call {
     }
 
     get isInProgress() {
-        return this._state !== CALL_STATE.ACTIVE && this._state !== CALL_STATE.ENDED && this._state !== CALL_STATE.NEW;
+        return (
+            this._state === CALL_STATE.NEW || this._state === CALL_STATE.TRYING || this._state === CALL_STATE.RINGING
+        );
+    }
+
+    get isEnded() {
+        return this._state === CALL_STATE.ENDED;
     }
 
     propose() {
-        this._state = CALL_STATE.PROPOSED;
         return this;
     }
 

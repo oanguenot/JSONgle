@@ -1,4 +1,7 @@
-import { debug } from "loglevel";
+import { debug } from "../utils/log";
+
+const moduleNameSend = "transport ->";
+const moduleNameReceived = "transport <-";
 
 export default class Transport {
     constructor(cfg, callback, context) {
@@ -11,7 +14,10 @@ export default class Transport {
         // Define the callback function to use when receiving new messages
         this._transport.in((message) => {
             // TODO: check message integerity: has message.action ?
-            debug(`[transport] <-- Received JSONgle action ${message.action}`);
+            debug(
+                moduleNameReceived,
+                `receive message ${message.id} with action '${message.jsongle.action}' and reason '${message.jsongle.reason}'`,
+            );
             callback.call(context, message);
         });
     }
@@ -24,7 +30,7 @@ export default class Transport {
         if (!this._transport.out) {
             throw new Error("Missing handler 'out' on transport");
         }
-        debug(`[transport] --> Send message ${message["message-type"]}`);
+        debug(moduleNameSend, `send message ${message.id} with action '${message.jsongle.action}'`);
         this._transport.out(message);
     }
 }

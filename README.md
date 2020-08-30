@@ -117,4 +117,17 @@ jsongle.oncallstatechanged = (call) => {
 
 ### Action 'session-retract'
 
+## Call State
+
+A `Call` can have the following states:
+
+|   **State**    | **Description**                                                                                                      |
+| :------------: | :------------------------------------------------------------------------------------------------------------------- |
+|     `new`      | Call has just been created                                                                                           |
+|    `trying`    | Call has been received by the server and is being routed to the remote recipient.<br>Only for the issuer of the call |
+|   `ringing`    | Call has been received by the remote peer and is being presented<br>Only for the issuer                              |
+| `establishing` | Call has been accepted by the remote peer and is being established                                                   |
+|    `active`    | Call is active                                                                                                       |
+|    `ended`     | Call is ended                                                                                                        |
+
 ...To complete

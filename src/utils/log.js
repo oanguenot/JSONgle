@@ -6,26 +6,26 @@ export const setVerboseLog = (shouldHaveVerboseLog) => {
     log.setLevel(shouldHaveVerboseLog ? log.levels.TRACE : log.levels.WARN);
 };
 
-const getHeader = () => {
-    return "#jsongle";
+const getHeader = () => `${new Date().toISOString()} | jsongle`;
+
+const format = (header, module, message) => `${header} | ${module} | ${message}`;
+
+export const debug = (name, message) => {
+    log.debug(format(getHeader(), name, message));
 };
 
-export const debug = (message) => {
-    log.debug(`${getHeader()} - ${message}`);
+export const trace = (name, message) => {
+    log.trace(format(getHeader(), name, message));
 };
 
-export const trace = (message) => {
-    log.trace(`${getHeader()} - ${message}`);
+export const info = (name, message) => {
+    log.info(format(getHeader(), name, message));
 };
 
-export const info = (message) => {
-    log.info(`${getHeader()} - ${message}`);
+export const warn = (name, message) => {
+    log.warn(format(getHeader(), name, message));
 };
 
-export const warn = (message) => {
-    log.warn(`${getHeader()} - ${message}`);
-};
-
-export const error = (message) => {
-    log.error(`${getHeader()} - ${message}`);
+export const error = (name, message) => {
+    log.error(format(getHeader(), name, message));
 };

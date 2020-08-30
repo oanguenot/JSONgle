@@ -1,12 +1,14 @@
-import { warn } from "loglevel";
 import { getLibName, getVersion } from "./utils/helper";
 
 import Peer from "./peer/Peer";
 import CallHandler from "./protocol/CallHandler";
-import { setVerboseLog } from "./utils/log";
+import { setVerboseLog, debug, info } from "./utils/log";
 import { createStore } from "./data/Store";
 import { reducer as callReducer } from "./data/CallsReducer";
 import { reducer as peerReducer, PEER_ACTIONS } from "./data/PeerReducer";
+import { CALL_STATE } from "./protocol/jsongle";
+
+const moduleName = "jsongle-indx";
 
 /**
  * JSONgle class
@@ -18,8 +20,14 @@ export default class JSONgle {
             throw new Error("Argument 'cfg', is missing - 'Object' containing the global configuration");
         }
 
+        if (cfg.verbose) {
+            this.verboseLog = true;
+        }
         this._name = getLibName();
         this._version = getVersion();
+
+        info(moduleName, `welcome to ${this.name} version ${this.version}`);
+
         this._callStore = createStore(callReducer);
         this._peerStore = createStore(peerReducer);
         this._peerStore.dispatch({ type: PEER_ACTIONS.SET_PEER, payload: { peer: new Peer(cfg.peer) } });
@@ -57,10 +65,10 @@ export default class JSONgle {
         }
 
         if (!withMedia) {
-            warn("No 'withMedia' argument specified - use 'audio' (default value)");
+            debug(moduleName, "no 'withMedia' argument specified - use 'audio' (default value)");
         }
 
-        console.log(">>>this._peer", this._peerStore.getState());
+        debug(moduleName, `call with '${media}`);
 
         this._callHandler.propose(this._peerStore.getState().peer.id, toId, media);
     }
@@ -105,6 +113,7 @@ export default class JSONgle {
      * True to set log level to verbose, false otherwise
      */
     set verboseLog(isVerbose) {
+        info(moduleName, `verbose log is activated '${isVerbose}'`);
         setVerboseLog(isVerbose);
     }
 
@@ -113,5 +122,9 @@ export default class JSONgle {
      */
     get currentCall() {
         return this._callHandler.currentCall;
+    }
+
+    static get CALL_STATE() {
+        return CALL_STATE;
     }
 }

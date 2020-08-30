@@ -12,19 +12,22 @@ const initialState = {
     activity: ACTIVITY.FREE,
 };
 
-export const reducer = (state = initialState, action) => {
-    info(`[reducer::call] execute action ${action.type}`);
+const moduleName = "reducer:call";
 
+export const reducer = (state = initialState, action) => {
     switch (action.type) {
         case CALL_ACTIONS.INITIATE_CALL:
         case CALL_ACTIONS.ANSWER_CALL:
-            info(`[reducer::call] execute ${action.type} and set activity to ${ACTIVITY.BUSY}`);
+            info(moduleName, `execute action '${action.type}' and set activity '${ACTIVITY.BUSY}'`);
             return { ...state, activity: ACTIVITY.BUSY };
         case CALL_ACTIONS.RELEASE_CALL:
-            info(`[reducer::call] execute ${action.type} and set activity to ${ACTIVITY.BUSY}`);
+            info(moduleName, `execute action '${action.type}' and set activity '${ACTIVITY.BUSY}'`);
             return { ...state, activity: ACTIVITY.FREE };
+        case "@@redux/INIT":
+            info(moduleName, "initialized successfully");
+            return state;
         default:
-            warn(`[reducer::call] unhandled action ${action.type}`);
+            warn(moduleName, `unhandled action '${action.type}'`);
             return state;
     }
 };

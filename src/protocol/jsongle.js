@@ -21,9 +21,9 @@ export const SESSION_INFO_REASON = {
 
 export const CALL_STATE = {
     NEW: "new",
-    PROPOSED: "proposed",
     TRYING: "trying",
     RINGING: "ringing",
+    ESTABLISHING: "establishing",
     ACTIVE: "active",
     ENDED: "ended",
 };
