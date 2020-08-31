@@ -22,13 +22,13 @@ const getActionFromState = (state, reason) => {
 };
 
 export default class Call {
-    constructor(caller, callee, media) {
-        this._id = generateNewId();
+    constructor(caller, callee, media, id, initiated) {
+        this._id = id || generateNewId();
         this._state = CALL_STATE.NEW;
         this._caller = caller;
         this._callee = callee;
         this._media = media;
-        this._initiated = new Date();
+        this._initiated = initiated || new Date();
         this._ended = null;
         this._endedReason = "";
     }
@@ -59,12 +59,19 @@ export default class Call {
 
     get isInProgress() {
         return (
-            this._state === CALL_STATE.NEW || this._state === CALL_STATE.TRYING || this._state === CALL_STATE.RINGING
+            this._state === CALL_STATE.NEW ||
+            this._state === CALL_STATE.TRYING ||
+            this._state === CALL_STATE.RINGING ||
+            this._state === CALL_STATE.ESTABLISHING
         );
     }
 
     get isEnded() {
         return this._state === CALL_STATE.ENDED;
+    }
+
+    isFrom(userId) {
+        return this._caller === userId;
     }
 
     propose() {
@@ -73,6 +80,11 @@ export default class Call {
 
     trying() {
         this._state = CALL_STATE.TRYING;
+        return this;
+    }
+
+    ringing() {
+        this._state = CALL_STATE.RINGING;
         return this;
     }
 

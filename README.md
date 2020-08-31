@@ -121,13 +121,30 @@ jsongle.oncallstatechanged = (call) => {
 
 A `Call` can have the following states:
 
-|   **State**    | **Description**                                                                                                      |
-| :------------: | :------------------------------------------------------------------------------------------------------------------- |
-|     `new`      | Call has just been created                                                                                           |
-|    `trying`    | Call has been received by the server and is being routed to the remote recipient.<br>Only for the issuer of the call |
-|   `ringing`    | Call has been received by the remote peer and is being presented<br>Only for the issuer                              |
+| **State**      | **Description**                                                                                                      |
+| :------------- | :------------------------------------------------------------------------------------------------------------------- |
+| `new`          | Call has just been created                                                                                           |
+| `trying`       | Call has been received by the server and is being routed to the remote recipient.<br>Only for the issuer of the call |
+| `ringing`      | Call has been received by the remote peer and is being presented<br>Only for the issuer                              |
 | `establishing` | Call has been accepted by the remote peer and is being established                                                   |
-|    `active`    | Call is active                                                                                                       |
-|    `ended`     | Call is ended                                                                                                        |
+| `active`       | Call is active                                                                                                       |
+| `releasing`    | Call is releasing by a peer                                                                                          |
+| `ended`        | Call is ended                                                                                                        |
+
+### Call lifecycle from the caller point of view
+
+On the caller side, the `Call` has the following cycle:
+
+`new` -> `trying` -> `ringing` -> `establishing` -> `active` -> `releasing` -> `eneded`
+
+_Note_: From any state, the `Call` state can move to `ended`.
+
+### Call lifecycle from the callee point of view
+
+On the callee side, the `Call` has the following cycle:
+
+`ringing` -> `establishing` -> `active` -> `releasing` -> `eneded`
+
+_Note_: From any state, the `Call` state can move to `ended`.
 
 ...To complete

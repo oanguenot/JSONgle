@@ -33,9 +33,18 @@ export default class CallHandler {
             case JSONGLE_ACTIONS.INFO:
                 this.handleSessionInfoMessage(reason);
                 break;
+            case JSONGLE_ACTIONS.PROPOSE:
+                this.handleProposeMessage(message);
+                break;
             default:
                 break;
         }
+    }
+
+    handleProposeMessage(message) {
+        debug(moduleName, `call proposed from '${message.from}' using media '${message.media}'`);
+        this._currentCall = new Call(message.from, message.to, message.media, message.id, message.initiated);
+        this.ringing(true);
     }
 
     handleSessionInfoMessage(reason) {
@@ -107,6 +116,21 @@ export default class CallHandler {
 
         this._callStore.dispatch({ type: CALL_ACTIONS.RELEASE_CALL, payload: {} });
         this._currentCall = null;
+    }
+
+    ringing(isNewCall) {
+        debug(moduleName, `ring call sid '${this._currentCall.id}'`);
+        const ringingMsg = this._currentCall.ringing().jsongleze();
+
+        if (!isNewCall) {
+            this.fireOnCallStateChanged();
+        } else {
+            this.fireOnCall();
+        }
+
+        this._callStore.dispatch({ type: CALL_ACTIONS.ANSWER_CALL, payload: {} });
+
+        this._transport.sendMessage(ringingMsg);
     }
 
     registerCallback(name, callback) {
