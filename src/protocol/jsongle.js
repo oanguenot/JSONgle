@@ -14,6 +14,7 @@ export const JSONGLE_ACTIONS = {
 export const SESSION_INFO_REASON = {
     UNREACHABLE: "unreachable",
     TRYING: "trying",
+    RINGING: "ringing",
     PROPOSED: "proposed",
     DISCONNECTED: "disconnected",
     UNKNOWN_SESSION: "unknown-session",
@@ -26,9 +27,15 @@ export const CALL_STATE = {
     ESTABLISHING: "establishing",
     ACTIVE: "active",
     ENDED: "ended",
+    UNKNOWN: "unknown",
 };
 
 export const ACTIVITY = {
     FREE: "free",
     BUSY: "busy",
+};
+
+export const CALL_DIRECTION = {
+    OUTGOING: "outgoing",
+    INCOMING: "incoming",
 };

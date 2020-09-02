@@ -2,7 +2,7 @@ import { debug, warn } from "../utils/log";
 import Transport from "../transport/Transport";
 import { CALL_ACTIONS } from "../data/CallsReducer";
 import Call from "./Call";
-import { JSONGLE_ACTIONS, SESSION_INFO_REASON } from "./jsongle";
+import { JSONGLE_ACTIONS, SESSION_INFO_REASON, CALL_DIRECTION } from "./jsongle";
 
 const moduleName = "call-handler";
 
@@ -42,8 +42,15 @@ export default class CallHandler {
     }
 
     handleProposeMessage(message) {
-        debug(moduleName, `call proposed from '${message.from}' using media '${message.media}'`);
-        this._currentCall = new Call(message.from, message.to, message.media, message.id, message.initiated);
+        debug(moduleName, `call proposed from '${message.from}' using media '${message.jsongle.description.media}'`);
+        this._currentCall = new Call(
+            message.from,
+            message.to,
+            message.jsongle.description.media,
+            CALL_DIRECTION.INCOMING,
+            message.jsongle.sid,
+            new Date(message.jsongle.description.initiated)
+        );
         this.ringing(true);
     }
 
@@ -56,6 +63,9 @@ export default class CallHandler {
             case SESSION_INFO_REASON.TRYING:
                 this.trying();
                 break;
+            case SESSION_INFO_REASON.RINGING:
+                this.ringing(false);
+                break;
             default:
                 break;
         }
@@ -63,7 +73,7 @@ export default class CallHandler {
 
     propose(fromId, toId, media) {
         debug(moduleName, `propose call to '${toId}' using media '${media}'`);
-        this._currentCall = new Call(fromId, toId, media);
+        this._currentCall = new Call(fromId, toId, media, CALL_DIRECTION.OUTGOING);
         debug(moduleName, `call sid '${this._currentCall.id}'`);
 
         this.fireOnCall();
@@ -126,11 +136,9 @@ export default class CallHandler {
             this.fireOnCallStateChanged();
         } else {
             this.fireOnCall();
+            this._callStore.dispatch({ type: CALL_ACTIONS.ANSWER_CALL, payload: {} });
+            this._transport.sendMessage(ringingMsg);
         }
-
-        this._callStore.dispatch({ type: CALL_ACTIONS.ANSWER_CALL, payload: {} });
-
-        this._transport.sendMessage(ringingMsg);
     }
 
     registerCallback(name, callback) {
