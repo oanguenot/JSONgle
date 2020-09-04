@@ -1,22 +1,28 @@
 import { generateNewId } from "../utils/helper";
-import { JSONGLE_ACTIONS, CALL_STATE, CALL_DIRECTION } from "./jsongle";
+import { JSONGLE_ACTIONS, CALL_STATE, CALL_DIRECTION, CALL_ENDED_REASON } from "./jsongle";
 
 const getActionFromState = (state, reason) => {
     switch (state) {
         case CALL_STATE.NEW:
             return JSONGLE_ACTIONS.PROPOSE;
         case CALL_STATE.ENDED:
-            if (reason === "retracted") {
+            if (reason === CALL_ENDED_REASON.RETRACTED) {
                 return JSONGLE_ACTIONS.RETRACT;
             }
 
-            if (reason === "terminated") {
+            if (reason === CALL_ENDED_REASON.TERMINATED) {
                 return JSONGLE_ACTIONS.TERMINATE;
+            }
+
+            if (reason === CALL_ENDED_REASON.DECLINED) {
+                return JSONGLE_ACTIONS.DECLINE;
             }
 
             return JSONGLE_ACTIONS.NONE;
         case CALL_STATE.RINGING:
             return JSONGLE_ACTIONS.INFO;
+        case CALL_STATE.ACCEPTED:
+            return JSONGLE_ACTIONS.ACCEPT;
         default:
             return JSONGLE_ACTIONS.NONE;
     }
@@ -28,9 +34,9 @@ const getReasonFromActionAndState = (action, state) => {
             if (state === CALL_STATE.RINGING) {
                 return CALL_STATE.RINGING;
             }
-            return CALL_STATE.UNKNOWN;
+            return CALL_STATE.NOOP;
         default:
-            return CALL_STATE.UNKNOWN;
+            return CALL_STATE.NOOP;
     }
 };
 
@@ -44,6 +50,7 @@ export default class Call {
         this._direction = direction || CALL_DIRECTION.OUTGOING;
         this._initiated = initiated || new Date();
         this._rang = null;
+        this._accepted = null;
         this._active = null;
         this._ended = null;
         this._endedReason = "";
@@ -78,7 +85,7 @@ export default class Call {
     }
 
     set endedAt(value) {
-        this._endedReason = value;
+        this._ended = value;
     }
 
     get initiatedAt() {
@@ -91,6 +98,14 @@ export default class Call {
 
     set rangAt(value) {
         this._rang = value;
+    }
+
+    get acceptedAt() {
+        return this._accepted;
+    }
+
+    set acceptedAt(value) {
+        this._accepted = value;
     }
 
     get activeAt() {
@@ -106,7 +121,7 @@ export default class Call {
     }
 
     set endedReason(value) {
-        this._endedReason = this.endedReason;
+        this._endedReason = value;
     }
 
     get isActive() {
@@ -118,6 +133,7 @@ export default class Call {
             this._state === CALL_STATE.NEW ||
             this._state === CALL_STATE.TRYING ||
             this._state === CALL_STATE.RINGING ||
+            this._state === CALL_STATE.ACCEPTED ||
             this._state === CALL_STATE.ESTABLISHING
         );
     }
@@ -162,14 +178,14 @@ export default class Call {
     retract() {
         this._state = CALL_STATE.ENDED;
         this._ended = new Date();
-        this._endedReason = "retracted";
+        this._endedReason = CALL_ENDED_REASON.RETRACTED;
         return this;
     }
 
     terminate() {
         this._state = CALL_STATE.ENDED;
         this._ended = new Date();
-        this._endedReason = "terminated";
+        this._endedReason = CALL_ENDED_REASON.TERMINATED;
         return this;
     }
 
@@ -178,6 +194,17 @@ export default class Call {
         this._endedReason = reason;
         this._ended = new Date();
         return this;
+    }
+
+    accept() {
+        this._state = CALL_STATE.ACCEPTED;
+        this._accepted = new Date();
+    }
+
+    decline() {
+        this.state = CALL_STATE.ENDED;
+        this._endedReason = CALL_ENDED_REASON.DECLINED;
+        this._ended = new Date();
     }
 
     jsongleze() {
@@ -197,6 +224,7 @@ export default class Call {
                 description: {
                     initiated: this._initiated ? this.initiatedAt.toJSON() : null,
                     rang: this._rang ? this._rang.toJSON() : null,
+                    accepted: this._accepted ? this._accepted.toJSON() : null,
                     active: this._active ? this._active.toJSON() : null,
                     ended: this._ended ? this._ended.toJSON() : null,
                     ended_reason: this._endedReason,
@@ -218,6 +246,7 @@ export default class Call {
         cloned.rangAt = this._rang;
         cloned.activeAt = this._active;
         cloned.endedAt = this._ended;
+        cloned.acceptedAt = this._accepted;
         cloned.endedReason = this._endedReason;
 
         return cloned;

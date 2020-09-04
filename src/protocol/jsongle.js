@@ -8,7 +8,7 @@ export const JSONGLE_ACTIONS = {
     INITIATE: "session-initiate",
     TERMINATE: "session-terminate",
     TRANSPORT: "transport-info",
-    NONE: "none",
+    NOOP: "noop",
 };
 
 export const SESSION_INFO_REASON = {
@@ -24,10 +24,11 @@ export const CALL_STATE = {
     NEW: "new",
     TRYING: "trying",
     RINGING: "ringing",
+    ACCEPTED: "accepted",
     ESTABLISHING: "establishing",
     ACTIVE: "active",
     ENDED: "ended",
-    UNKNOWN: "unknown",
+    NOOP: "",
 };
 
 export const ACTIVITY = {
@@ -38,4 +39,16 @@ export const ACTIVITY = {
 export const CALL_DIRECTION = {
     OUTGOING: "outgoing",
     INCOMING: "incoming",
+};
+
+export const MEDIA = {
+    AUDIO: "audio",
+    VIDEO: "video",
+    VIDEO_ONLY: "video-only",
+};
+
+export const CALL_ENDED_REASON = {
+    RETRACTED: "retracted",
+    TERMINATED: "terminated",
+    DECLINED: "declined",
 };

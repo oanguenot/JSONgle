@@ -79,11 +79,67 @@ JSONgle offers the following methods and events.
 
 #### Call
 
+This method calls a user.
+
+```js
+const jsongle = new JSONGle({...});
+
+jsongle.oncall = (call) => {
+    // Do something when the call has been initiated
+};
+
+// Initiate a new audio call
+jsongle.call(id, JSONGle.MEDIA.AUDIO);
+```
+
+The mandatory parameter is the identifier of the recipient. Depending on how your server dispatch the message it can be the user id or any information that allows to contact the right recipient.
+
+The method accepts a second optional parameter which is the media used. This is used to alert the recipient about the kind of call you want to initiate. If not provided, the default media used is `MEDIA.AUDIO`.
+
+```js
+jsongle.call(id, JSONGle.MEDIA.AUDIO);
+```
+
 #### Decline
+
+When call is in `ringing` state and initiated from someone else (`direction` === `JSONgle.DIRECTION.INCOMING`), you have the possibility to decline it.
+
+```js
+jsongle.oncallended = (call) => {
+    // Do something when the call has been ended
+};
+
+jsongle.decline();
+```
+
+The call will be ended.
 
 #### Accept
 
+In the same manner, when the cal is in `ringing` state and initiated from someone else (`direction` === `JSONgle.DIRECTION.INCOMING`), you have the possibility to accept it.
+
+```js
+jsongle.accept();
+```
+
+The call will move to state `accepted` that will trigger the negotiation step.
+
 #### End
+
+At anytime, an initiated call can be ended by the issuer or the responder. When the call not yet active, the issuer can **retract** it. When the call is active, both can **end** that call.
+
+From the application point of view, only one method is provided that retracts or ends the call.
+
+```js
+jsongle.oncallended = (call) => {
+    // Do something when the call has been ended
+};
+
+// End or retract a call
+jsongle.end(call);
+```
+
+#### Add or remove a media
 
 ### Events
 
@@ -99,7 +155,7 @@ Here is an exemple of registering to an event
 
 ```js
 jsongle.oncallstatechanged = (call) => {
-    // The call state has changed. Do something with that call
+    // The call state has changed. Do something if needed
 };
 ```
 
@@ -126,6 +182,7 @@ A `Call` can have the following states:
 | `new`          | Call has just been created                                                                                           |
 | `trying`       | Call has been received by the server and is being routed to the remote recipient.<br>Only for the issuer of the call |
 | `ringing`      | Call has been received by the remote peer and is being presented<br>Only for the issuer                              |
+| `accepted`     | Call has been accepted by the responder                                                                              |
 | `establishing` | Call has been accepted by the remote peer and is being established                                                   |
 | `active`       | Call is active                                                                                                       |
 | `releasing`    | Call is releasing by a peer                                                                                          |
@@ -135,7 +192,7 @@ A `Call` can have the following states:
 
 On the caller side, the `Call` has the following cycle:
 
-`new` -> `trying` -> `ringing` -> `establishing` -> `active` -> `releasing` -> `eneded`
+`new` -> `trying` -> `ringing` -> `accepted` -> `establishing` -> `active` -> `releasing` -> `ended`
 
 _Note_: From any state, the `Call` state can move to `ended`.
 
@@ -143,7 +200,7 @@ _Note_: From any state, the `Call` state can move to `ended`.
 
 On the callee side, the `Call` has the following cycle:
 
-`ringing` -> `establishing` -> `active` -> `releasing` -> `eneded`
+`ringing` -> `accepted` -> `establishing` -> `active` -> `releasing` -> `ended`
 
 _Note_: From any state, the `Call` state can move to `ended`.
 

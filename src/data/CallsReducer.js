@@ -21,7 +21,7 @@ export const reducer = (state = initialState, action) => {
             info(moduleName, `execute action '${action.type}' and set activity '${ACTIVITY.BUSY}'`);
             return { ...state, activity: ACTIVITY.BUSY };
         case CALL_ACTIONS.RELEASE_CALL:
-            info(moduleName, `execute action '${action.type}' and set activity '${ACTIVITY.BUSY}'`);
+            info(moduleName, `execute action '${action.type}' and set activity '${ACTIVITY.FREE}'`);
             return { ...state, activity: ACTIVITY.FREE };
         case "@@redux/INIT":
             info(moduleName, "initialized successfully");

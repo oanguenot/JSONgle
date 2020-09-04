@@ -6,7 +6,7 @@ import { setVerboseLog, debug, info } from "./utils/log";
 import { createStore } from "./data/Store";
 import { reducer as callReducer } from "./data/CallsReducer";
 import { reducer as peerReducer, PEER_ACTIONS } from "./data/PeerReducer";
-import { CALL_STATE } from "./protocol/jsongle";
+import { CALL_STATE, MEDIA, CALL_DIRECTION } from "./protocol/jsongle";
 
 const moduleName = "jsongle-indx";
 
@@ -85,6 +85,28 @@ export default class JSONgle {
     }
 
     /**
+     * Accept the current call
+     */
+    accept() {
+        if (!this.currentCall) {
+            throw Error("Can't end the call - not in a call");
+        }
+
+        this._callHandler.accept();
+    }
+
+    /**
+     * Decline the current call
+     */
+    decline() {
+        if (!this.currentCall) {
+            throw Error("Can't end the call - not in a call");
+        }
+
+        this._callHandler.decline();
+    }
+
+    /**
      * Register to event 'oncallstatechanged'
      * Fired when the state of the call has changed
      */
@@ -124,7 +146,24 @@ export default class JSONgle {
         return this._callHandler.currentCall;
     }
 
+    /**
+     * Definition of type CALL_STATE
+     */
     static get CALL_STATE() {
         return CALL_STATE;
+    }
+
+    /**
+     * Definition of type MEDIA
+     */
+    static get MEDIA() {
+        return MEDIA;
+    }
+
+    /**
+     * Definition of type CALL_DIRECTION
+     */
+    static get CALL_DIRECTION() {
+        return CALL_DIRECTION;
     }
 }

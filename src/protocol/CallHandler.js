@@ -36,13 +36,22 @@ export default class CallHandler {
             case JSONGLE_ACTIONS.PROPOSE:
                 this.handleProposeMessage(message);
                 break;
+            case JSONGLE_ACTIONS.RETRACT:
+                this.handleRetractMessage(message);
+                break;
+            case JSONGLE_ACTIONS.DECLINE:
+                this.handleDeclineMessage(message);
+                break;
             default:
                 break;
         }
     }
 
     handleProposeMessage(message) {
-        debug(moduleName, `call proposed from '${message.from}' using media '${message.jsongle.description.media}'`);
+        debug(
+            moduleName,
+            `call ${message.jsongle.sid} proposed from '${message.from}' using media '${message.jsongle.description.media}'`
+        );
         this._currentCall = new Call(
             message.from,
             message.to,
@@ -52,6 +61,16 @@ export default class CallHandler {
             new Date(message.jsongle.description.initiated)
         );
         this.ringing(true);
+    }
+
+    handleRetractMessage(message) {
+        debug(moduleName, `call ${message.jsongle.sid} retracted from '${message.from}'`);
+        this.retractOrTerminate(false);
+    }
+
+    handleDeclineMessage(message) {
+        debug(moduleName, `call ${message.jsongle.sid} declined from '${message.from}'`);
+        this.decline(false);
     }
 
     handleSessionInfoMessage(reason) {
@@ -67,14 +86,15 @@ export default class CallHandler {
                 this.ringing(false);
                 break;
             default:
+                this.noop();
                 break;
         }
     }
 
     propose(fromId, toId, media) {
-        debug(moduleName, `propose call to '${toId}' using media '${media}'`);
         this._currentCall = new Call(fromId, toId, media, CALL_DIRECTION.OUTGOING);
-        debug(moduleName, `call sid '${this._currentCall.id}'`);
+
+        debug(moduleName, `propose call ${this._currentCall.id} to '${toId}' with '${media}'`);
 
         this.fireOnCall();
 
@@ -85,7 +105,31 @@ export default class CallHandler {
         this._transport.sendMessage(proposeMsg);
     }
 
-    retractOrTerminate() {
+    accept() {
+        debug(moduleName, `accept call '${this._currentCall.id}'`);
+        this._currentCall.accept();
+        this.fireOnCallStateChanged();
+
+        const msg = this._currentCall.jsongleze();
+        this._transport.sendMessage(msg);
+    }
+
+    decline(shouldSendMessage = true) {
+        debug(moduleName, `decline call '${this._currentCall.id}'`);
+        this._currentCall.decline();
+        this.fireOnCallStateChanged();
+        this.fireOnCallEnded();
+
+        if (shouldSendMessage) {
+            const msg = this._currentCall.jsongleze();
+            this._transport.sendMessage(msg);
+        }
+
+        this._callStore.dispatch({ type: CALL_ACTIONS.RELEASE_CALL, payload: {} });
+        this._currentCall = null;
+    }
+
+    retractOrTerminate(shouldSendMessage = true) {
         if (!this._currentCall.isInProgress && !this._currentCall.isActive) {
             warn(moduleName, `call with sid '${this._currentCall.id}' is not in progress or active`);
             this.abort("incorrect-state");
@@ -100,12 +144,13 @@ export default class CallHandler {
             this._currentCall.terminate();
         }
 
-        const msg = this._currentCall.jsongleze();
-
         this.fireOnCallStateChanged();
         this.fireOnCallEnded();
 
-        this._transport.sendMessage(msg);
+        if (shouldSendMessage) {
+            const msg = this._currentCall.jsongleze();
+            this._transport.sendMessage(msg);
+        }
 
         this._callStore.dispatch({ type: CALL_ACTIONS.RELEASE_CALL, payload: {} });
         this._currentCall = null;
@@ -128,17 +173,21 @@ export default class CallHandler {
         this._currentCall = null;
     }
 
-    ringing(isNewCall) {
+    ringing(isNewCall = false) {
         debug(moduleName, `ring call sid '${this._currentCall.id}'`);
         const ringingMsg = this._currentCall.ringing().jsongleze();
 
-        if (!isNewCall) {
-            this.fireOnCallStateChanged();
-        } else {
+        if (isNewCall) {
             this.fireOnCall();
             this._callStore.dispatch({ type: CALL_ACTIONS.ANSWER_CALL, payload: {} });
             this._transport.sendMessage(ringingMsg);
         }
+
+        this.fireOnCallStateChanged();
+    }
+
+    noop() {
+        debug(moduleName, "do nothing - strange!");
     }
 
     registerCallback(name, callback) {
@@ -164,5 +213,9 @@ export default class CallHandler {
         if (this._callbacks.oncallended) {
             this._callbacks.oncallended(this._currentCall);
         }
+    }
+
+    get currentCall() {
+        return this._currentCall;
     }
 }
