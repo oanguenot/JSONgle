@@ -114,15 +114,15 @@ jsongle.decline();
 
 The call will be ended.
 
-#### Accept
+#### Proceed
 
-In the same manner, when the cal is in `ringing` state and initiated from someone else (`direction` === `JSONgle.DIRECTION.INCOMING`), you have the possibility to accept it.
+In the same manner, when the cal is in `ringing` state and initiated from someone else (`direction` === `JSONgle.DIRECTION.INCOMING`), you have the possibility to proceed it.
 
 ```js
-jsongle.accept();
+jsongle.proceed();
 ```
 
-The call will move to state `accepted` that will trigger the negotiation step.
+The call will move to state `proceeded` that will trigger the negotiation step.
 
 #### End
 
@@ -192,7 +192,7 @@ A `Call` can have the following states:
 
 On the caller side, the `Call` has the following cycle:
 
-`new` -> `trying` -> `ringing` -> `accepted` -> `establishing` -> `active` -> `releasing` -> `ended`
+`new` -> `trying` -> `ringing` -> `accepted` -> `negotiating` -> `active` -> `releasing` -> `ended`
 
 _Note_: From any state, the `Call` state can move to `ended`.
 
@@ -200,8 +200,57 @@ _Note_: From any state, the `Call` state can move to `ended`.
 
 On the callee side, the `Call` has the following cycle:
 
-`ringing` -> `accepted` -> `establishing` -> `active` -> `releasing` -> `ended`
+`ringing` -> `accepted` -> `negotiating` -> `active` -> `releasing` -> `ended`
 
 _Note_: From any state, the `Call` state can move to `ended`.
 
-...To complete
+## Messages exchanged
+
+This part lists the messages exchanged during the session
+
+### session-propose
+
+The **session-propose** message is sent to propose a session to a recipient.
+
+```json
+{
+    "id": "20229102-7f9f-4ef4-87d8-481dd6ef5f85",
+    "from": "70001",
+    "to": "70002",
+    "jsongle": {
+        "sid": "3bf74aa9-f41d-40d5-a1d8-e3e614ba4af2",
+        "action": "session-propose",
+        "reason": "",
+        "initiator": "70001",
+        "responder": "70002",
+        "description": {
+            "initiated": "2020-09-05T19:31:34.186Z",
+            "media": "audio"
+        }
+    }
+}
+```
+
+### session-retract
+
+The **session-retract** message is sent when the issuer want to cancel the call in progress. This message is only sent if the call is not active. Elsewhere a **session-terminate** message is sent.
+
+```json
+// to describe
+```
+
+### session-decline
+
+The **session-decline** message is sent when the responder wants to decline the call.
+
+```json
+// to describe
+```
+
+### session-proceed
+
+The **session-proceed** message is sent when the responder wants to proceed the call.
+
+```json
+// to describe
+```
