@@ -81,18 +81,18 @@ export default class JSONgle {
             throw Error("Can't end the call - not in a call");
         }
 
-        this._callHandler.retractOrTerminate();
+        this._callHandler.retractOrTerminate(new Date());
     }
 
     /**
-     * Accept the current call
+     * Proceed the current call
      */
-    accept() {
+    proceed() {
         if (!this.currentCall) {
             throw Error("Can't end the call - not in a call");
         }
 
-        this._callHandler.accept();
+        this._callHandler.proceed(new Date());
     }
 
     /**
@@ -103,7 +103,7 @@ export default class JSONgle {
             throw Error("Can't end the call - not in a call");
         }
 
-        this._callHandler.decline();
+        this._callHandler.decline(new Date());
     }
 
     /**
@@ -131,6 +131,14 @@ export default class JSONgle {
     }
 
     /**
+     * Register to event 'oncallended'
+     * Fired when the current call has been ended (aborded, declined, retracted, disconnected)
+     */
+    set onnegotiationneeded(callback) {
+        this._callHandler.registerCallback("onnegotiationneeded", callback);
+    }
+
+    /**
      * Set verbose log.
      * True to set log level to verbose, false otherwise
      */
@@ -144,6 +152,18 @@ export default class JSONgle {
      */
     get currentCall() {
         return this._callHandler.currentCall;
+    }
+
+    sendOffer(offer) {
+        if (!this.currentCall) {
+            throw Error("Can't send offer - not in a call");
+        }
+
+        if (!offer) {
+            throw Error("Can't send offer - no offer");
+        }
+
+        this._callHandler.offer(offer, new Date());
     }
 
     /**

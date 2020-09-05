@@ -21,8 +21,8 @@ const getActionFromState = (state, reason) => {
             return JSONGLE_ACTIONS.NONE;
         case CALL_STATE.RINGING:
             return JSONGLE_ACTIONS.INFO;
-        case CALL_STATE.ACCEPTED:
-            return JSONGLE_ACTIONS.ACCEPT;
+        case CALL_STATE.PROCEEDED:
+            return JSONGLE_ACTIONS.PROCEED;
         default:
             return JSONGLE_ACTIONS.NONE;
     }
@@ -40,6 +40,41 @@ const getReasonFromActionAndState = (action, state) => {
     }
 };
 
+const getDescriptionFromAction = (context, action) => {
+    switch (action) {
+        case JSONGLE_ACTIONS.PROPOSE:
+            return {
+                initiated: context._initiated ? context._initiated.toJSON() : null,
+                media: context._media,
+            };
+        case JSONGLE_ACTIONS.RETRACT:
+        case JSONGLE_ACTIONS.TERMINATE:
+        case JSONGLE_ACTIONS.DECLINE:
+            return {
+                ended: context._ended ? context._ended.toJSON() : null,
+                ended_reason: context._endedReason,
+            };
+        case JSONGLE_ACTIONS.INFO:
+            if (context._state === CALL_STATE.RINGING) {
+                return {
+                    rang: context._rang ? context._rang.toJSON() : null,
+                };
+            }
+            return {};
+        case JSONGLE_ACTIONS.PROCEED:
+            return {
+                proceeded: context._proceeded ? context._proceeded.toJSON() : null,
+            };
+        case JSONGLE_ACTIONS.INITIATE:
+            return {
+                negotiating: context._negotiating ? context._negotiating.toJSON() : null,
+                offer: context._offer ? JSON.stringify(context._offer) : null,
+            };
+        default:
+            return {};
+    }
+};
+
 export default class Call {
     constructor(caller, callee, media, direction, id, initiated) {
         this._id = id || generateNewId();
@@ -49,11 +84,14 @@ export default class Call {
         this._media = media;
         this._direction = direction || CALL_DIRECTION.OUTGOING;
         this._initiated = initiated || new Date();
+        this._tried = null;
         this._rang = null;
-        this._accepted = null;
+        this._proceeded = null;
+        this._negotiating = null;
         this._active = null;
         this._ended = null;
         this._endedReason = "";
+        this._offer = null;
     }
 
     get id() {
@@ -92,6 +130,14 @@ export default class Call {
         return this._initiated;
     }
 
+    get triedAt() {
+        return this._tried;
+    }
+
+    set triedAt(value) {
+        this._tried = value;
+    }
+
     get rangAt() {
         return this._rang;
     }
@@ -100,12 +146,20 @@ export default class Call {
         this._rang = value;
     }
 
-    get acceptedAt() {
-        return this._accepted;
+    get proceededAt() {
+        return this._proceeded;
     }
 
-    set acceptedAt(value) {
-        this._accepted = value;
+    set proceededAt(value) {
+        this._proceeded = value;
+    }
+
+    get negotiatingAt() {
+        return this._negotiating;
+    }
+
+    set negotiatingAt(value) {
+        this._negotiating = value;
     }
 
     get activeAt() {
@@ -133,8 +187,8 @@ export default class Call {
             this._state === CALL_STATE.NEW ||
             this._state === CALL_STATE.TRYING ||
             this._state === CALL_STATE.RINGING ||
-            this._state === CALL_STATE.ACCEPTED ||
-            this._state === CALL_STATE.ESTABLISHING
+            this._state === CALL_STATE.PROCEEDED ||
+            this._state === CALL_STATE.NEGOTIATING
         );
     }
 
@@ -150,6 +204,14 @@ export default class Call {
         return this._direction;
     }
 
+    get offer() {
+        return this._offer;
+    }
+
+    set offer(value) {
+        this._offer = value;
+    }
+
     isFrom(userId) {
         return this._caller === userId;
     }
@@ -158,58 +220,66 @@ export default class Call {
         return this;
     }
 
-    trying() {
+    trying(triedAt) {
         this._state = CALL_STATE.TRYING;
+        this._tried = triedAt;
         return this;
     }
 
-    ringing() {
+    ringing(ringingAt) {
         this._state = CALL_STATE.RINGING;
-        this._rang = new Date();
+        this._rang = ringingAt;
         return this;
     }
 
-    activate() {
+    activate(activateAt) {
         this._state = CALL_STATE.ACTIVE;
-        this._active = new Date();
+        this._active = activateAt;
         return this;
     }
 
-    retract() {
+    retract(endedAt) {
         this._state = CALL_STATE.ENDED;
-        this._ended = new Date();
+        this._ended = endedAt;
         this._endedReason = CALL_ENDED_REASON.RETRACTED;
         return this;
     }
 
-    terminate() {
+    terminate(endedAt) {
         this._state = CALL_STATE.ENDED;
-        this._ended = new Date();
+        this._ended = endedAt;
         this._endedReason = CALL_ENDED_REASON.TERMINATED;
         return this;
     }
 
-    abort(reason) {
+    abort(reason, abortedAt) {
         this._state = CALL_STATE.ENDED;
         this._endedReason = reason;
-        this._ended = new Date();
+        this._ended = abortedAt;
         return this;
     }
 
-    accept() {
-        this._state = CALL_STATE.ACCEPTED;
-        this._accepted = new Date();
+    proceed(proceededAt) {
+        this._state = CALL_STATE.PROCEEDED;
+        this._proceeded = proceededAt;
     }
 
-    decline() {
+    decline(declinedAt) {
         this.state = CALL_STATE.ENDED;
         this._endedReason = CALL_ENDED_REASON.DECLINED;
-        this._ended = new Date();
+        this._ended = declinedAt;
+    }
+
+    negotiate(offer, negotiatedAt) {
+        this.state = CALL_STATE.NEGOTIATING;
+        this._negotiating = negotiatedAt;
+        this._offer = offer;
     }
 
     jsongleze() {
         const action = getActionFromState(this._state, this._endedReason);
         const reason = getReasonFromActionAndState(action, this._state);
+        const description = getDescriptionFromAction(this, action);
 
         return {
             id: generateNewId(),
@@ -221,20 +291,12 @@ export default class Call {
                 reason,
                 initiator: this._caller,
                 responder: this._callee,
-                description: {
-                    initiated: this._initiated ? this.initiatedAt.toJSON() : null,
-                    rang: this._rang ? this._rang.toJSON() : null,
-                    accepted: this._accepted ? this._accepted.toJSON() : null,
-                    active: this._active ? this._active.toJSON() : null,
-                    ended: this._ended ? this._ended.toJSON() : null,
-                    ended_reason: this._endedReason,
-                    media: this._media,
-                    additional_data: {
-                        initiator_name: "",
-                        initiator_photo: "",
-                        session_object: "",
-                    },
-                },
+                description,
+                // additional_data: {
+                //     initiator_name: "",
+                //     initiator_photo: "",
+                //     session_object: "",
+                // },
             },
         };
     }
@@ -243,12 +305,15 @@ export default class Call {
         const cloned = new Call(this._caller, this._callee, this._media, this._direction, this._id, this._initiated);
 
         cloned.state = this._state;
+        cloned.triedAt = this._tried;
         cloned.rangAt = this._rang;
+        cloned.proceededAt = this._proceeded;
+        cloned.negotiatingAt = this._negotiating;
         cloned.activeAt = this._active;
         cloned.endedAt = this._ended;
-        cloned.acceptedAt = this._accepted;
+        cloned.proceededAt = this._proceeded;
         cloned.endedReason = this._endedReason;
-
+        cloned.offer = this._offer;
         return cloned;
     }
 }
