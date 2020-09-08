@@ -23,6 +23,12 @@ const getActionFromState = (state, reason) => {
             return JSONGLE_ACTIONS.INFO;
         case CALL_STATE.PROCEEDED:
             return JSONGLE_ACTIONS.PROCEED;
+        case CALL_STATE.NEGOTIATING:
+            return JSONGLE_ACTIONS.INITIATE;
+        case CALL_STATE.NEGOTIATED:
+            return JSONGLE_ACTIONS.ACCEPT;
+        case CALL_STATE.ESTABLISHING:
+            return JSONGLE_ACTIONS.TRANSPORT;
         default:
             return JSONGLE_ACTIONS.NONE;
     }
@@ -68,7 +74,19 @@ const getDescriptionFromAction = (context, action) => {
         case JSONGLE_ACTIONS.INITIATE:
             return {
                 negotiating: context._negotiating ? context._negotiating.toJSON() : null,
-                offer: context._offer ? JSON.stringify(context._offer) : null,
+                offer: context._localOffer,
+            };
+        case JSONGLE_ACTIONS.ACCEPT:
+            return {
+                negotiated: context._negotiated ? context._negotiated.toJSON() : null,
+                answer: context._localOffer,
+            };
+        case JSONGLE_ACTIONS.TRANSPORT:
+            const [candidate] = context._candidates.slice(-1);
+
+            return {
+                establishing: context._establishing ? context._establishing.toJSON() : null,
+                candidate,
             };
         default:
             return {};
@@ -88,10 +106,15 @@ export default class Call {
         this._rang = null;
         this._proceeded = null;
         this._negotiating = null;
+        this._negotiated = null;
+        this._establishing = null;
         this._active = null;
         this._ended = null;
         this._endedReason = "";
-        this._offer = null;
+        this._localOffer = null;
+        this._remoteOffer = null;
+        this._candidates = [];
+        this._remoteCandidates = [];
     }
 
     get id() {
@@ -162,6 +185,22 @@ export default class Call {
         this._negotiating = value;
     }
 
+    get negotiatedAt() {
+        return this._negotiated;
+    }
+
+    set negotiatedAt(value) {
+        this._negotiated = value;
+    }
+
+    get establishingAt() {
+        return this._establishing;
+    }
+
+    set establishingAt(value) {
+        this._establishing = value;
+    }
+
     get activeAt() {
         return this._active;
     }
@@ -188,7 +227,9 @@ export default class Call {
             this._state === CALL_STATE.TRYING ||
             this._state === CALL_STATE.RINGING ||
             this._state === CALL_STATE.PROCEEDED ||
-            this._state === CALL_STATE.NEGOTIATING
+            this._state === CALL_STATE.NEGOTIATING ||
+            this._state === CALL_STATE.NEGOTIATED ||
+            this._state === CALL_STATE.ESTABLISHING
         );
     }
 
@@ -204,12 +245,20 @@ export default class Call {
         return this._direction;
     }
 
-    get offer() {
-        return this._offer;
+    get localOffer() {
+        return this._localOffer;
     }
 
-    set offer(value) {
-        this._offer = value;
+    set localOffer(value) {
+        this._localOffer = value;
+    }
+
+    get remoteOffer() {
+        return this._remoteOffer;
+    }
+
+    set remoteOffer(value) {
+        this._remoteOffer = value;
     }
 
     isFrom(userId) {
@@ -262,18 +311,49 @@ export default class Call {
     proceed(proceededAt) {
         this._state = CALL_STATE.PROCEEDED;
         this._proceeded = proceededAt;
+        return this;
     }
 
     decline(declinedAt) {
-        this.state = CALL_STATE.ENDED;
+        this._state = CALL_STATE.ENDED;
         this._endedReason = CALL_ENDED_REASON.DECLINED;
         this._ended = declinedAt;
+        return this;
     }
 
-    negotiate(offer, negotiatedAt) {
-        this.state = CALL_STATE.NEGOTIATING;
-        this._negotiating = negotiatedAt;
-        this._offer = offer;
+    setLocalOffer(offer) {
+        this._localOffer = offer;
+    }
+
+    setRemoteOffer(offer) {
+        this._remoteOffer = offer;
+    }
+
+    offer(offeredAt) {
+        this._state = CALL_STATE.NEGOTIATING;
+        this._negotiating = offeredAt;
+        return this;
+    }
+
+    answer(answeredAt) {
+        this._state = CALL_STATE.NEGOTIATED;
+        this._negotiated = answeredAt;
+        return this;
+    }
+
+    establish(candidate, establishingAt, isLocalCandidate = true) {
+        if (this._state !== CALL_STATE.ESTABLISHING) {
+            this._state = CALL_STATE.ESTABLISHING;
+            this._establishing = establishingAt;
+        }
+
+        if (isLocalCandidate) {
+            this._candidates.push(candidate);
+        } else {
+            this._remoteCandidates.push(candidate);
+        }
+
+        return this;
     }
 
     jsongleze() {
@@ -309,11 +389,13 @@ export default class Call {
         cloned.rangAt = this._rang;
         cloned.proceededAt = this._proceeded;
         cloned.negotiatingAt = this._negotiating;
+        cloned.negotiatedAt = this._negotiated;
+        cloned.establishingAt = this._establishing;
         cloned.activeAt = this._active;
         cloned.endedAt = this._ended;
-        cloned.proceededAt = this._proceeded;
         cloned.endedReason = this._endedReason;
-        cloned.offer = this._offer;
+        cloned.localOffer = this._localOffer;
+        cloned.remoteOffer = this._remoteOffer;
         return cloned;
     }
 }

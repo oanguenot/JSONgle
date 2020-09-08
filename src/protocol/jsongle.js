@@ -26,6 +26,8 @@ export const CALL_STATE = {
     RINGING: "ringing",
     PROCEEDED: "proceeded",
     NEGOTIATING: "negotiating",
+    NEGOTIATED: "negotiated",
+    ESTABLISHING: "establishing",
     ACTIVE: "active",
     ENDED: "ended",
     NOOP: "",

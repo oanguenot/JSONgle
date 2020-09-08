@@ -1,6 +1,6 @@
 import * as log from "loglevel";
 
-log.setDefaultLevel(log.levels.WARN);
+log.setDefaultLevel(log.levels.TRACE);
 
 export const setVerboseLog = (shouldHaveVerboseLog) => {
     log.setLevel(shouldHaveVerboseLog ? log.levels.TRACE : log.levels.WARN);

@@ -81,7 +81,7 @@ export default class JSONgle {
             throw Error("Can't end the call - not in a call");
         }
 
-        this._callHandler.retractOrTerminate(new Date());
+        this._callHandler.retractOrTerminate(true, new Date());
     }
 
     /**
@@ -92,7 +92,7 @@ export default class JSONgle {
             throw Error("Can't end the call - not in a call");
         }
 
-        this._callHandler.proceed(new Date());
+        this._callHandler.proceed(true, new Date());
     }
 
     /**
@@ -103,7 +103,7 @@ export default class JSONgle {
             throw Error("Can't end the call - not in a call");
         }
 
-        this._callHandler.decline(new Date());
+        this._callHandler.decline(true, new Date());
     }
 
     /**
@@ -131,11 +131,35 @@ export default class JSONgle {
     }
 
     /**
-     * Register to event 'oncallended'
-     * Fired when the current call has been ended (aborded, declined, retracted, disconnected)
+     * Register to event 'onofferneeded'
+     * Fired when the current call needs an offer to continue (from the PeerConnection)
      */
-    set onnegotiationneeded(callback) {
-        this._callHandler.registerCallback("onnegotiationneeded", callback);
+    set onofferneeded(callback) {
+        this._callHandler.registerCallback("onofferneeded", callback);
+    }
+
+    /**
+     * Register to event 'onofferreceived'
+     * Fired when the current call needs an answer to continue (from the PeerConnection)
+     */
+    set onofferreceived(callback) {
+        this._callHandler.registerCallback("onofferreceived", callback);
+    }
+
+    /**
+     * Register to event 'ontransportneeded'
+     * Fired when the current call needs to give the received ICE Candidate (to the PeerConnection)
+     */
+    set ontransportneeded(callback) {
+        this._callHandler.registerCallback("ontransportneeded", callback);
+    }
+
+    /**
+     * Register to event 'onanswerreceived'
+     * Fired when the current call needs to give the received ICE Candidate (to the PeerConnection)
+     */
+    set onanswerreceived(callback) {
+        this._callHandler.registerCallback("onanswerreceived", callback);
     }
 
     /**
@@ -163,7 +187,31 @@ export default class JSONgle {
             throw Error("Can't send offer - no offer");
         }
 
-        this._callHandler.offer(offer, new Date());
+        this._callHandler.offer(true, offer, new Date());
+    }
+
+    sendAnswer(answer) {
+        if (!this.currentCall) {
+            throw Error("Can't send answer - not in a call");
+        }
+
+        if (!answer) {
+            throw Error("Can't send answer - no answer");
+        }
+
+        this._callHandler.answer(true, answer, new Date());
+    }
+
+    sendCandidate(candidate) {
+        if (!this.currentCall) {
+            throw Error("Can't send candidate - not in a call");
+        }
+
+        if (!candidate) {
+            throw Error("Can't send candidate - no candidate");
+        }
+
+        this._callHandler.offerCandidate(true, candidate, new Date());
     }
 
     /**

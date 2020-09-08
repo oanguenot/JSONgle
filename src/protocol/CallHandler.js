@@ -16,7 +16,10 @@ export default class CallHandler {
             oncall: null,
             oncallstatechanged: null,
             oncallended: null,
-            onnegotiationneeded: null,
+            onofferneeded: null,
+            onofferreceived: null,
+            onanswerreceived: null,
+            ontransportneeded: null,
         };
     }
 
@@ -53,6 +56,23 @@ export default class CallHandler {
                 break;
             case JSONGLE_ACTIONS.PROCEED:
                 this.proceed(false, new Date(message.jsongle.description.proceeded));
+                break;
+            case JSONGLE_ACTIONS.INITIATE:
+                this.offer(false, message.jsongle.description.offer, new Date(message.jsongle.description.negotiating));
+                break;
+            case JSONGLE_ACTIONS.ACCEPT:
+                this.answer(
+                    false,
+                    message.jsongle.description.answer,
+                    new Date(message.jsongle.description.negotiated)
+                );
+                break;
+            case JSONGLE_ACTIONS.TRANSPORT:
+                this.offerCandidate(
+                    false,
+                    message.jsongle.description.candidate,
+                    new Date(message.jsongle.description.establishing)
+                );
                 break;
             default:
                 break;
@@ -105,7 +125,7 @@ export default class CallHandler {
             const msg = this._currentCall.jsongleze();
             this._transport.sendMessage(msg);
         } else {
-            this.fireOnNegotiationNeeded();
+            this.fireOnOfferNeeded();
         }
     }
 
@@ -194,10 +214,72 @@ export default class CallHandler {
         this.fireOnCallStateChanged();
     }
 
-    offer(offer, offeredAt) {
-        debug(moduleName, `offers call '${this._currentCall.id}'`);
-        const offerMsg = this._currentCall.negotiate(offer, offeredAt).jsongleze();
-        this._transport.sendMessage(offerMsg);
+    offer(shouldSendMessage = true, offer, offeredAt) {
+        if (shouldSendMessage) {
+            debug(moduleName, `send offer for call '${this._currentCall.id}'`);
+        } else {
+            debug(moduleName, `received offer for call '${this._currentCall.id}'`);
+        }
+
+        if (shouldSendMessage) {
+            this._currentCall.setLocalOffer(offer);
+        } else {
+            this._currentCall.setRemoteOffer(offer);
+        }
+
+        this._currentCall.offer(offeredAt);
+
+        if (shouldSendMessage) {
+            const offerMsg = this._currentCall.jsongleze();
+            this._transport.sendMessage(offerMsg);
+        } else {
+            this.fireOnOfferReceived(offer);
+        }
+
+        this.fireOnCallStateChanged();
+    }
+
+    answer(shouldSendMessage = true, offer, answeredAt) {
+        if (shouldSendMessage) {
+            debug(moduleName, `send answer for call '${this._currentCall.id}'`);
+        } else {
+            debug(moduleName, `received answer for call '${this._currentCall.id}'`);
+        }
+
+        if (shouldSendMessage) {
+            this._currentCall.setLocalOffer(offer);
+        } else {
+            this._currentCall.setRemoteOffer(offer);
+        }
+
+        this._currentCall.answer(answeredAt);
+
+        if (shouldSendMessage) {
+            const answerMsg = this._currentCall.jsongleze();
+            this._transport.sendMessage(answerMsg);
+        } else {
+            this.fireOnAnswerReceived(offer);
+        }
+
+        this.fireOnCallStateChanged();
+    }
+
+    offerCandidate(shouldSendMessage, candidate, establishedAt) {
+        if (shouldSendMessage) {
+            debug(moduleName, `send candidate for call '${this._currentCall.id}'`);
+        } else {
+            debug(moduleName, `received candidate for call '${this._currentCall.id}'`);
+        }
+
+        this._currentCall.establish(candidate, establishedAt, shouldSendMessage);
+
+        if (shouldSendMessage) {
+            const offerMsg = this._currentCall.jsongleze();
+            this._transport.sendMessage(offerMsg);
+        } else {
+            this.fireOnTransportNeeded(candidate);
+        }
+
         this.fireOnCallStateChanged();
     }
 
@@ -230,9 +312,27 @@ export default class CallHandler {
         }
     }
 
-    fireOnNegotiationNeeded() {
-        if (this._callbacks.onnegotiationneeded) {
-            this._callbacks.onnegotiationneeded(this._currentCall);
+    fireOnOfferNeeded() {
+        if (this._callbacks.onofferneeded) {
+            this._callbacks.onofferneeded(this._currentCall);
+        }
+    }
+
+    fireOnOfferReceived(offer) {
+        if (this._callbacks.onofferreceived) {
+            this._callbacks.onofferreceived(offer);
+        }
+    }
+
+    fireOnAnswerReceived(offer) {
+        if (this._callbacks.onanswerreceived) {
+            this._callbacks.onanswerreceived(offer);
+        }
+    }
+
+    fireOnTransportNeeded(candidate) {
+        if (this._callbacks.ontransportneeded) {
+            this._callbacks.ontransportneeded(candidate);
         }
     }
 
