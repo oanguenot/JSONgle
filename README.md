@@ -151,7 +151,7 @@ You can subscribe to the following events on the **JSONgle** instance
 | `oncallstatechanged` | Fired each time there is an update on the current call.<br>The event contains the `Call`                                                                                                                                                      |
 | `oncallended`        | Fired when a call has ended.<br>The event contains the `Call`                                                                                                                                                                                 |
 | `onofferneeded`      | Fired when a call needs a SDP offer.<br>The event contains the `Call`<br>The application should get the local description (SDP) and answer as soon as possible by calling the method `sendOffer` with the offer generated from the browser.   |
-| `onanswerneeded`     | Fired when a call needs a SDP answer.<br>The event contains the `Call`<br>The application should get the local description (SDP) and answer as soon as possible by calling the method `sendAnswer` with the offer generated from the browser. |
+| `onofferreceived`    | Fired when a call needs a SDP answer.<br>The event contains the `Call`<br>The application should get the local description (SDP) and answer as soon as possible by calling the method `sendAnswer` with the offer generated from the browser. |
 
 Here is an exemple of registering to an event
 
@@ -179,22 +179,22 @@ jsongle.oncallstatechanged = (call) => {
 
 A `Call` can have the following states:
 
-| **State**     | **Description**                                                                                                      |
-| :------------ | :------------------------------------------------------------------------------------------------------------------- |
-| `new`         | Call has just been created                                                                                           |
-| `trying`      | Call has been received by the server and is being routed to the remote recipient.<br>Only for the issuer of the call |
-| `ringing`     | Call has been received by the remote peer and is being presented<br>Only for the issuer                              |
-| `accepted`    | Call has been accepted by the responder                                                                              |
-| `negotiating` | Call has been accepted by the remote peer and is being negotiated                                                    |
-| `active`      | Call is active                                                                                                       |
-| `releasing`   | Call is releasing by a peer                                                                                          |
-| `ended`       | Call is ended                                                                                                        |
+| **State**   | **Description**                                                                                                      |
+| :---------- | :------------------------------------------------------------------------------------------------------------------- |
+| `new`       | Call has just been created                                                                                           |
+| `trying`    | Call has been received by the server and is being routed to the remote recipient.<br>Only for the issuer of the call |
+| `ringing`   | Call has been received by the remote peer and is being presented<br>Only for the issuer                              |
+| `accepted`  | Call has been accepted by the responder                                                                              |
+| `OFFERING`  | Call has been accepted by the remote peer and is being negotiated                                                    |
+| `active`    | Call is active                                                                                                       |
+| `releasing` | Call is releasing by a peer                                                                                          |
+| `ended`     | Call is ended                                                                                                        |
 
 ### Call lifecycle from the caller point of view
 
 On the caller side, the `Call` has the following cycle:
 
-`new` -> `trying` -> `ringing` -> `accepted` -> `negotiating` -> `active` -> `releasing` -> `ended`
+`new` -> `trying` -> `ringing` -> `accepted` -> `OFFERING` -> `active` -> `releasing` -> `ended`
 
 _Note_: From any state, the `Call` state can move to `ended`.
 
@@ -202,7 +202,7 @@ _Note_: From any state, the `Call` state can move to `ended`.
 
 On the callee side, the `Call` has the following cycle:
 
-`ringing` -> `accepted` -> `negotiating` -> `active` -> `releasing` -> `ended`
+`ringing` -> `accepted` -> `OFFERING` -> `active` -> `releasing` -> `ended`
 
 _Note_: From any state, the `Call` state can move to `ended`.
 

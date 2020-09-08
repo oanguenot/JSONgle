@@ -58,14 +58,10 @@ export default class CallHandler {
                 this.proceed(false, new Date(message.jsongle.description.proceeded));
                 break;
             case JSONGLE_ACTIONS.INITIATE:
-                this.offer(false, message.jsongle.description.offer, new Date(message.jsongle.description.negotiating));
+                this.offer(false, message.jsongle.description.offer, new Date(message.jsongle.description.offering));
                 break;
             case JSONGLE_ACTIONS.ACCEPT:
-                this.answer(
-                    false,
-                    message.jsongle.description.answer,
-                    new Date(message.jsongle.description.negotiated)
-                );
+                this.answer(false, message.jsongle.description.answer, new Date(message.jsongle.description.offered));
                 break;
             case JSONGLE_ACTIONS.TRANSPORT:
                 this.offerCandidate(

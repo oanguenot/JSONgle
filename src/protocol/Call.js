@@ -1,7 +1,7 @@
 import { generateNewId } from "../utils/helper";
 import { JSONGLE_ACTIONS, CALL_STATE, CALL_DIRECTION, CALL_ENDED_REASON } from "./jsongle";
 
-const getActionFromState = (state, reason) => {
+const getActionFromStateAndReason = (state, reason) => {
     switch (state) {
         case CALL_STATE.NEW:
             return JSONGLE_ACTIONS.PROPOSE;
@@ -23,11 +23,15 @@ const getActionFromState = (state, reason) => {
             return JSONGLE_ACTIONS.INFO;
         case CALL_STATE.PROCEEDED:
             return JSONGLE_ACTIONS.PROCEED;
-        case CALL_STATE.NEGOTIATING:
-            return JSONGLE_ACTIONS.INITIATE;
-        case CALL_STATE.NEGOTIATED:
-            return JSONGLE_ACTIONS.ACCEPT;
-        case CALL_STATE.ESTABLISHING:
+        case CALL_STATE.OFFERING:
+            // TODO can be initiate, accept or transport
+            if (reason === "have-offer") {
+                return JSONGLE_ACTIONS.INITIATE;
+            }
+            if (reason === "have-answer") {
+                return JSONGLE_ACTIONS.ACCEPT;
+            }
+
             return JSONGLE_ACTIONS.TRANSPORT;
         default:
             return JSONGLE_ACTIONS.NONE;
@@ -73,12 +77,12 @@ const getDescriptionFromAction = (context, action) => {
             };
         case JSONGLE_ACTIONS.INITIATE:
             return {
-                negotiating: context._negotiating ? context._negotiating.toJSON() : null,
+                offering: context._offering ? context._offering.toJSON() : null,
                 offer: context._localOffer,
             };
         case JSONGLE_ACTIONS.ACCEPT:
             return {
-                negotiated: context._negotiated ? context._negotiated.toJSON() : null,
+                offered: context._offered ? context._offered.toJSON() : null,
                 answer: context._localOffer,
             };
         case JSONGLE_ACTIONS.TRANSPORT:
@@ -105,12 +109,12 @@ export default class Call {
         this._tried = null;
         this._rang = null;
         this._proceeded = null;
-        this._negotiating = null;
-        this._negotiated = null;
+        this._offering = null;
+        this._offered = null;
         this._establishing = null;
         this._active = null;
         this._ended = null;
-        this._endedReason = "";
+        this._reason = "";
         this._localOffer = null;
         this._remoteOffer = null;
         this._candidates = [];
@@ -177,20 +181,20 @@ export default class Call {
         this._proceeded = value;
     }
 
-    get negotiatingAt() {
-        return this._negotiating;
+    get offeringAt() {
+        return this._offering;
     }
 
-    set negotiatingAt(value) {
-        this._negotiating = value;
+    set offeringAt(value) {
+        this._offering = value;
     }
 
-    get negotiatedAt() {
-        return this._negotiated;
+    get offeredAt() {
+        return this._offered;
     }
 
-    set negotiatedAt(value) {
-        this._negotiated = value;
+    set offeredAt(value) {
+        this._offered = value;
     }
 
     get establishingAt() {
@@ -209,12 +213,12 @@ export default class Call {
         this._active = value;
     }
 
-    get endedReason() {
-        return this._endedReason;
+    get reason() {
+        return this._reason;
     }
 
-    set endedReason(value) {
-        this._endedReason = value;
+    set reason(value) {
+        this._reason = value;
     }
 
     get isActive() {
@@ -227,9 +231,7 @@ export default class Call {
             this._state === CALL_STATE.TRYING ||
             this._state === CALL_STATE.RINGING ||
             this._state === CALL_STATE.PROCEEDED ||
-            this._state === CALL_STATE.NEGOTIATING ||
-            this._state === CALL_STATE.NEGOTIATED ||
-            this._state === CALL_STATE.ESTABLISHING
+            this._state === CALL_STATE.OFFERING
         );
     }
 
@@ -290,20 +292,20 @@ export default class Call {
     retract(endedAt) {
         this._state = CALL_STATE.ENDED;
         this._ended = endedAt;
-        this._endedReason = CALL_ENDED_REASON.RETRACTED;
+        this._reason = CALL_ENDED_REASON.RETRACTED;
         return this;
     }
 
     terminate(endedAt) {
         this._state = CALL_STATE.ENDED;
         this._ended = endedAt;
-        this._endedReason = CALL_ENDED_REASON.TERMINATED;
+        this._reason = CALL_ENDED_REASON.TERMINATED;
         return this;
     }
 
     abort(reason, abortedAt) {
         this._state = CALL_STATE.ENDED;
-        this._endedReason = reason;
+        this._reason = reason;
         this._ended = abortedAt;
         return this;
     }
@@ -316,7 +318,7 @@ export default class Call {
 
     decline(declinedAt) {
         this._state = CALL_STATE.ENDED;
-        this._endedReason = CALL_ENDED_REASON.DECLINED;
+        this._reason = CALL_ENDED_REASON.DECLINED;
         this._ended = declinedAt;
         return this;
     }
@@ -330,22 +332,24 @@ export default class Call {
     }
 
     offer(offeredAt) {
-        this._state = CALL_STATE.NEGOTIATING;
-        this._negotiating = offeredAt;
+        this._state = CALL_STATE.OFFERING;
+        this._offering = offeredAt;
+        this._reason = "have-offer";
         return this;
     }
 
     answer(answeredAt) {
-        this._state = CALL_STATE.NEGOTIATED;
-        this._negotiated = answeredAt;
+        this._offered = answeredAt;
+        this._reason = "have-answer";
         return this;
     }
 
     establish(candidate, establishingAt, isLocalCandidate = true) {
-        if (this._state !== CALL_STATE.ESTABLISHING) {
-            this._state = CALL_STATE.ESTABLISHING;
+        if (!this._establishing) {
             this._establishing = establishingAt;
         }
+
+        this._reason = "have-candidate";
 
         if (isLocalCandidate) {
             this._candidates.push(candidate);
@@ -357,7 +361,7 @@ export default class Call {
     }
 
     jsongleze() {
-        const action = getActionFromState(this._state, this._endedReason);
+        const action = getActionFromStateAndReason(this._state, this._reason);
         const reason = getReasonFromActionAndState(action, this._state);
         const description = getDescriptionFromAction(this, action);
 
@@ -388,12 +392,12 @@ export default class Call {
         cloned.triedAt = this._tried;
         cloned.rangAt = this._rang;
         cloned.proceededAt = this._proceeded;
-        cloned.negotiatingAt = this._negotiating;
-        cloned.negotiatedAt = this._negotiated;
+        cloned.offeringAt = this._offering;
+        cloned.offeredAt = this._offered;
         cloned.establishingAt = this._establishing;
         cloned.activeAt = this._active;
         cloned.endedAt = this._ended;
-        cloned.endedReason = this._endedReason;
+        cloned.reason = this._reason;
         cloned.localOffer = this._localOffer;
         cloned.remoteOffer = this._remoteOffer;
         return cloned;
