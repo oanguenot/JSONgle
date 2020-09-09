@@ -3,6 +3,7 @@ import Transport from "../transport/Transport";
 import { CALL_ACTIONS } from "../data/CallsReducer";
 import Call from "./Call";
 import { JSONGLE_ACTIONS, SESSION_INFO_REASON, CALL_DIRECTION } from "./jsongle";
+import { error } from "loglevel";
 
 const moduleName = "call-handler";
 
@@ -18,8 +19,7 @@ export default class CallHandler {
             oncallended: null,
             onofferneeded: null,
             onofferreceived: null,
-            onanswerreceived: null,
-            ontransportneeded: null,
+            ontransportreceived: null,
         };
     }
 
@@ -230,6 +230,7 @@ export default class CallHandler {
             this._transport.sendMessage(offerMsg);
         } else {
             this.fireOnOfferReceived(offer);
+            this.fireOnOfferNeeded();
         }
 
         this.fireOnCallStateChanged();
@@ -254,7 +255,7 @@ export default class CallHandler {
             const answerMsg = this._currentCall.jsongleze();
             this._transport.sendMessage(answerMsg);
         } else {
-            this.fireOnAnswerReceived(offer);
+            this.fireOnOfferReceived(offer);
         }
 
         this.fireOnCallStateChanged();
@@ -273,7 +274,7 @@ export default class CallHandler {
             const offerMsg = this._currentCall.jsongleze();
             this._transport.sendMessage(offerMsg);
         } else {
-            this.fireOnTransportNeeded(candidate);
+            this.fireOnCandidateReceived(candidate);
         }
 
         this.fireOnCallStateChanged();
@@ -287,6 +288,8 @@ export default class CallHandler {
         if (name in this._callbacks) {
             this._callbacks[name] = callback;
             debug(moduleName, `registered callback '${name}'`);
+        } else {
+            error(moduleName, `can't register callback for '${name}'`);
         }
     }
 
@@ -320,15 +323,9 @@ export default class CallHandler {
         }
     }
 
-    fireOnAnswerReceived(offer) {
-        if (this._callbacks.onanswerreceived) {
-            this._callbacks.onanswerreceived(offer);
-        }
-    }
-
-    fireOnTransportNeeded(candidate) {
-        if (this._callbacks.ontransportneeded) {
-            this._callbacks.ontransportneeded(candidate);
+    fireOnCandidateReceived(candidate) {
+        if (this._callbacks.ontransportreceived) {
+            this._callbacks.ontransportreceived(candidate);
         }
     }
 

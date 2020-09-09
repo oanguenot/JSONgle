@@ -147,19 +147,11 @@ export default class JSONgle {
     }
 
     /**
-     * Register to event 'ontransportneeded'
+     * Register to event 'ontransportreceived'
      * Fired when the current call needs to give the received ICE Candidate (to the PeerConnection)
      */
-    set ontransportneeded(callback) {
-        this._callHandler.registerCallback("ontransportneeded", callback);
-    }
-
-    /**
-     * Register to event 'onanswerreceived'
-     * Fired when the current call needs to give the received ICE Candidate (to the PeerConnection)
-     */
-    set onanswerreceived(callback) {
-        this._callHandler.registerCallback("onanswerreceived", callback);
+    set ontransportreceived(callback) {
+        this._callHandler.registerCallback("ontransportreceived", callback);
     }
 
     /**
@@ -178,6 +170,10 @@ export default class JSONgle {
         return this._callHandler.currentCall;
     }
 
+    /**
+     * Send an offer to recipient
+     * @param {*} offer The Offer to send
+     */
     sendOffer(offer) {
         if (!this.currentCall) {
             throw Error("Can't send offer - not in a call");
@@ -187,21 +183,19 @@ export default class JSONgle {
             throw Error("Can't send offer - no offer");
         }
 
-        this._callHandler.offer(true, offer, new Date());
+        info(moduleName, `send an offer of type '${offer.type}'`);
+
+        if (offer.type === "offer") {
+            this._callHandler.offer(true, offer, new Date());
+        } else {
+            this._callHandler.answer(true, offer, new Date());
+        }
     }
 
-    sendAnswer(answer) {
-        if (!this.currentCall) {
-            throw Error("Can't send answer - not in a call");
-        }
-
-        if (!answer) {
-            throw Error("Can't send answer - no answer");
-        }
-
-        this._callHandler.answer(true, answer, new Date());
-    }
-
+    /**
+     * Send the candidate to the recipient
+     * @param {*} candidate The candidate to send
+     */
     sendCandidate(candidate) {
         if (!this.currentCall) {
             throw Error("Can't send candidate - not in a call");
