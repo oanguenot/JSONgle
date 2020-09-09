@@ -8,11 +8,23 @@ Goal is that an application can use its existing server to exchange the signalin
 
 The exemple provided here is using **Socket.io** as the transport layer. But an abstraction is done to map your existing transport layer to **JSONgle**.
 
+## Signaling and WebRTC
+
+WebRTC needs a signaling way to negotiate with the remote peer about the media and the best path to follow.
+
+In fact, only few information need to be exchanged: a **SDP** and some **ICE Candidates**.
+
+So what **JSONgle** does is to ask for a local SDP in one side and its associated candidates and send them to the remote peer and by asking to that remote peer in a same maner his local description and some candidates that are given back to the initial sender. And that all!
+
+Additionnaly to that, **JSONgle** computes internally a **Call State** machine that can be retrieved throught some events and generate at the end of the communication a **log ticket** that summarize the evolution of that call. (to come).
+
 ## Configuration
+
+In order to adapt **JSONgle** to your own server, you need to do some configuration.
 
 ### Defining the transport layer
 
-The first thing you have to do is to define your transport wrapper
+The first thing you have to do is to define your transport wrapper by using the following pattern:
 
 ```js
 const transportWrapper = (transport) => {
@@ -34,6 +46,8 @@ The transport wrapper is in fact a function that embeds your own transport (here
 -   **in**: This property which is a function is used when receiving a message from your transport layer to give it back to **JSONgle** when it should be. Here, we listen to the event name `jsongle` and we execute the callback given with the message received.
 
 -   **out**: This property which is a function too is used when **JSONgle** needs to send a message using your transport layer. This function is called by **JSONgle** with the message to send as an argument. Just taken the message and send it using your transport layer.
+
+In that previous sample, the `transport` parameter is in fact an instance of **Socket.IO**. `transport.on` and `transport.emit` are function from **Socket.IO**.
 
 _Note_: If your transport layer allows to use custom event name, it is better to send all the **JSONgle** messages in a separate queue to avoid mixing them with your own events.
 
@@ -59,6 +73,8 @@ const peerCfg = {
     id: "43eed341123123",
 };
 ```
+
+_Note_: This `id` is used by JSONgle when generating messages. All messages will have a `from` and `to` field that will contain the `id` of the caller and the callee.
 
 ### Initialize JSONgle
 
@@ -145,13 +161,14 @@ jsongle.end(call);
 
 You can subscribe to the following events on the **JSONgle** instance
 
-| Events               | Description                                                                                                                                                                                                                                   |
-| :------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `oncall`             | Fired when a new call has been received or when a call is initiated.<br>The event contains the `Call`                                                                                                                                         |
-| `oncallstatechanged` | Fired each time there is an update on the current call.<br>The event contains the `Call`                                                                                                                                                      |
-| `oncallended`        | Fired when a call has ended.<br>The event contains the `Call`                                                                                                                                                                                 |
-| `onofferneeded`      | Fired when a call needs a SDP offer.<br>The event contains the `Call`<br>The application should get the local description (SDP) and answer as soon as possible by calling the method `sendOffer` with the offer generated from the browser.   |
-| `onofferreceived`    | Fired when a call needs a SDP answer.<br>The event contains the `Call`<br>The application should get the local description (SDP) and answer as soon as possible by calling the method `sendAnswer` with the offer generated from the browser. |
+| Events                | Description                                                                                                                                                                                                                                 |
+| :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `oncall`              | Fired when a new call has been received or when a call is initiated.<br>The event contains the `Call`                                                                                                                                       |
+| `oncallstatechanged`  | Fired each time there is an update on the current call.<br>The event contains the `Call`                                                                                                                                                    |
+| `oncallended`         | Fired when a call has ended.<br>The event contains the `Call`                                                                                                                                                                               |
+| `onofferneeded`       | Fired when a call needs a SDP offer.<br>The event contains the `Call`<br>The application should get the local description (SDP) and answer as soon as possible by calling the method `sendOffer` with the offer generated from the browser. |
+| `onofferreceived`     | Fired when a call received a SDP offer.<br>The event contains the `RTCSessionDescription` received from the recipient.<br>The application should give that offer to the `RTCPeerConnection`.                                                |
+| `ontransportreceived` | Fired when a call received an ICE candidate.<br>The event contains the `RTCIceCandidate` received from the recipient.<br>The application should give that candidate to the `RTCPeerConnection`.                                             |
 
 Here is an exemple of registering to an event
 
@@ -185,7 +202,7 @@ A `Call` can have the following states:
 | `trying`    | Call has been received by the server and is being routed to the remote recipient.<br>Only for the issuer of the call |
 | `ringing`   | Call has been received by the remote peer and is being presented<br>Only for the issuer                              |
 | `accepted`  | Call has been accepted by the responder                                                                              |
-| `OFFERING`  | Call has been accepted by the remote peer and is being negotiated                                                    |
+| `offering`  | Call has been accepted by the remote peer and is being negotiated                                                    |
 | `active`    | Call is active                                                                                                       |
 | `releasing` | Call is releasing by a peer                                                                                          |
 | `ended`     | Call is ended                                                                                                        |
@@ -194,7 +211,7 @@ A `Call` can have the following states:
 
 On the caller side, the `Call` has the following cycle:
 
-`new` -> `trying` -> `ringing` -> `accepted` -> `OFFERING` -> `active` -> `releasing` -> `ended`
+`new` -> `trying` -> `ringing` -> `accepted` -> `offering` -> `active` -> `releasing` -> `ended`
 
 _Note_: From any state, the `Call` state can move to `ended`.
 
@@ -202,7 +219,7 @@ _Note_: From any state, the `Call` state can move to `ended`.
 
 On the callee side, the `Call` has the following cycle:
 
-`ringing` -> `accepted` -> `OFFERING` -> `active` -> `releasing` -> `ended`
+`ringing` -> `accepted` -> `offering` -> `active` -> `releasing` -> `ended`
 
 _Note_: From any state, the `Call` state can move to `ended`.
 
