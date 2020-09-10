@@ -49,6 +49,20 @@ export default class JSONgle {
     }
 
     /**
+     * Return the current call or null
+     */
+    get currentCall() {
+        return this._callHandler.currentCall;
+    }
+
+    /**
+     * Get the peer id
+     */
+    get id() {
+        return this._peerStore.getState().peer.id;
+    }
+
+    /**
      * Call a peer
      * @param {String} toId A String representing the peer id
      * @param {String} withMedia A String representing the media. Can be 'audio' or 'video'
@@ -147,11 +161,11 @@ export default class JSONgle {
     }
 
     /**
-     * Register to event 'ontransportreceived'
+     * Register to event 'oncandidatereceived'
      * Fired when the current call needs to give the received ICE Candidate (to the PeerConnection)
      */
-    set ontransportreceived(callback) {
-        this._callHandler.registerCallback("ontransportreceived", callback);
+    set oncandidatereceived(callback) {
+        this._callHandler.registerCallback("oncandidatereceived", callback);
     }
 
     /**
@@ -161,13 +175,6 @@ export default class JSONgle {
     set verboseLog(isVerbose) {
         info(moduleName, `verbose log is activated '${isVerbose}'`);
         setVerboseLog(isVerbose);
-    }
-
-    /**
-     * Return the current call or null
-     */
-    get currentCall() {
-        return this._callHandler.currentCall;
     }
 
     /**

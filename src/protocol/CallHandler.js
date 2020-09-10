@@ -19,7 +19,7 @@ export default class CallHandler {
             oncallended: null,
             onofferneeded: null,
             onofferreceived: null,
-            ontransportreceived: null,
+            oncandidatereceived: null,
         };
     }
 
@@ -324,8 +324,8 @@ export default class CallHandler {
     }
 
     fireOnCandidateReceived(candidate) {
-        if (this._callbacks.ontransportreceived) {
-            this._callbacks.ontransportreceived(candidate);
+        if (this._callbacks.oncandidatereceived) {
+            this._callbacks.oncandidatereceived(candidate);
         }
     }
 
