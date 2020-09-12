@@ -135,6 +135,10 @@ A message will be sent to the initiator and the call will be ended (`state` === 
 In the same manner, when the call is ringing (`state`=== `ringing`) and initiated from someone else (`direction` === `JSONgle.DIRECTION.INCOMING`), you have the possibility to proceed it which means you want to answer the call.
 
 ```js
+jsongle.oncallstatechanged = (call) => {
+    // Do something when the call state has changed
+};
+
 jsongle.proceed();
 ```
 

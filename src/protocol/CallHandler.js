@@ -87,6 +87,9 @@ export default class CallHandler {
             case SESSION_INFO_REASON.RINGING:
                 this.ringing(false, new Date(jsongle.description.rang));
                 break;
+            case SESSION_INFO_REASON.ACTIVE:
+                this.active(false, new Date(jsongle.description.actived));
+                break;
             default:
                 this.noop();
                 break;
@@ -275,6 +278,23 @@ export default class CallHandler {
             this._transport.sendMessage(offerMsg);
         } else {
             this.fireOnCandidateReceived(candidate);
+        }
+
+        this.fireOnCallStateChanged();
+    }
+
+    active(shouldSendMessage, activedAt) {
+        if (shouldSendMessage) {
+            debug(moduleName, `send active for call '${this._currentCall.id}'`);
+        } else {
+            debug(moduleName, `received active for call '${this._currentCall.id}'`);
+        }
+
+        this._currentCall.active(activedAt);
+
+        if (shouldSendMessage) {
+            const activeMsg = this._currentCall.jsongleze();
+            this._transport.sendMessage(activeMsg);
         }
 
         this.fireOnCallStateChanged();

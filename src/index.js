@@ -199,6 +199,16 @@ export default class JSONgle {
         }
     }
 
+    setAsActive() {
+        if (!this.currentCall) {
+            throw Error("Can't send offer - not in a call");
+        }
+
+        info(moduleName, "set call as 'active'");
+
+        this._callHandler.active(true, new Date());
+    }
+
     /**
      * Send the candidate to the recipient
      * @param {*} candidate The candidate to send

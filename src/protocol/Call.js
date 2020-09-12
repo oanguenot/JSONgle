@@ -33,6 +33,8 @@ const getActionFromStateAndReason = (state, reason) => {
             }
 
             return JSONGLE_ACTIONS.TRANSPORT;
+        case CALL_STATE.ACTIVE:
+            return JSONGLE_ACTIONS.INFO;
         default:
             return JSONGLE_ACTIONS.NONE;
     }
@@ -41,10 +43,7 @@ const getActionFromStateAndReason = (state, reason) => {
 const getReasonFromActionAndState = (action, state) => {
     switch (action) {
         case JSONGLE_ACTIONS.INFO:
-            if (state === CALL_STATE.RINGING) {
-                return CALL_STATE.RINGING;
-            }
-            return CALL_STATE.NOOP;
+            return state;
         default:
             return CALL_STATE.NOOP;
     }
@@ -68,6 +67,12 @@ const getDescriptionFromAction = (context, action) => {
             if (context._state === CALL_STATE.RINGING) {
                 return {
                     rang: context._rang ? context._rang.toJSON() : null,
+                };
+            }
+
+            if (context._state === CALL_STATE.ACTIVE) {
+                return {
+                    actived: context._active ? context._active.toJSON() : null,
                 };
             }
             return {};
@@ -357,6 +362,16 @@ export default class Call {
             this._remoteCandidates.push(candidate);
         }
 
+        return this;
+    }
+
+    active(activedAt) {
+        if (!this._active) {
+            this._active = activedAt;
+        }
+
+        this._state = CALL_STATE.ACTIVE;
+        this._reason = "";
         return this;
     }
 

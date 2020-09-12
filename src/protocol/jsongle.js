@@ -18,6 +18,7 @@ export const SESSION_INFO_REASON = {
     PROPOSED: "proposed",
     DISCONNECTED: "disconnected",
     UNKNOWN_SESSION: "unknown-session",
+    ACTIVE: "active",
 };
 
 export const CALL_STATE = {
