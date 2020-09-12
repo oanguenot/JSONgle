@@ -18,6 +18,10 @@ So what **JSONgle** does is to ask for a local SDP in one side and its associate
 
 Additionnaly to that, **JSONgle** computes internally a **Call State** machine that can be retrieved throught some events and generate at the end of the communication a **log ticket** that summarize the evolution of that call. (to come).
 
+## WebRTC Adapter
+
+Don't forget to install and use [**WebRTC adapter**](https://github.com/webrtcHacks/adapter) in order to help you managing WebRTC on different browsers (JavaScript API).
+
 ## Configuration
 
 In order to adapt **JSONgle** to your own server, you need to do some configuration.
@@ -259,7 +263,7 @@ A `Call` can have the following states:
 
 On the caller side, the `Call` has the following cycle:
 
-`new` -> `trying` -> `ringing` -> `accepted` -> `offering` -> `active` -> `releasing` -> `ended`
+`new` -> `trying` -> `ringing` -> `proceeded` -> `offering` -> `active` -> `releasing` -> `ended`
 
 _Note_: From any state, the `Call` state can move to `ended`.
 
@@ -267,7 +271,7 @@ _Note_: From any state, the `Call` state can move to `ended`.
 
 On the callee side, the `Call` has the following cycle:
 
-`ringing` -> `accepted` -> `offering` -> `active` -> `releasing` -> `ended`
+`ringing` -> `proceeded` -> `offering` -> `active` -> `releasing` -> `ended`
 
 _Note_: From any state, the `Call` state can move to `ended`.
 
