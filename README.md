@@ -2,7 +2,7 @@
 
 ## Introduction
 
-**JSONgle** is a JavaScript library that proposes an agnostic transport implementation based and adapted from the Jingle signaling protocol for WebRTC calls based on JSON messages.
+**JSONgle** is a JavaScript library that proposes an agnostic transport implementation based and adapted from the Jingle signaling protocol for WebRTC calls using JSON messages.
 
 Goal is that an application can use its existing server to exchange the signaling messages between peers but relies on **JSONgle** for the content of these messages.
 
@@ -291,7 +291,13 @@ _Note_: From any state, the `Call` state can move to `ended`.
 
 ## Messages exchanged
 
-This part lists the messages exchanged during the session
+This part lists the different messages exchanged during the session lifecycle. This could help you plugging **JSONgle** to your existing transport layer.
+
+Each message is composed of:
+
+-   An **id** which is the unique identifier of the message
+-   2 fields: **from** and **to** which represent the caller and the caller. This is where you will map your existing user identifier.
+-   A **jsongle** object which contain the **JSONgle** grammar (aka the different kinds of messages)
 
 ### session-propose
 
