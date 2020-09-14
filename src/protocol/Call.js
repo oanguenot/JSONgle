@@ -1,42 +1,51 @@
 import { generateNewId } from "../utils/helper";
-import { JSONGLE_ACTIONS, CALL_STATE, CALL_DIRECTION, CALL_ENDED_REASON } from "./jsongle";
+import {
+    JSONGLE_ACTIONS,
+    CALL_STATE,
+    CALL_DIRECTION,
+    CALL_ENDED_REASON,
+    CALL_OFFERING_STATE,
+    CALL_ACTIVE_STATE,
+    CALL_ESTABLISHING_STATE,
+} from "./jsongle";
 
-const getActionFromStateAndReason = (state, reason) => {
+const getActionFromStateAndStep = (state, endedReason, offeringState, establishingState) => {
     switch (state) {
         case CALL_STATE.NEW:
             return JSONGLE_ACTIONS.PROPOSE;
         case CALL_STATE.ENDED:
-            if (reason === CALL_ENDED_REASON.RETRACTED) {
+            if (endedReason === CALL_ENDED_REASON.RETRACTED) {
                 return JSONGLE_ACTIONS.RETRACT;
             }
 
-            if (reason === CALL_ENDED_REASON.TERMINATED) {
+            if (endedReason === CALL_ENDED_REASON.TERMINATED) {
                 return JSONGLE_ACTIONS.TERMINATE;
             }
 
-            if (reason === CALL_ENDED_REASON.DECLINED) {
+            if (endedReason === CALL_ENDED_REASON.DECLINED) {
                 return JSONGLE_ACTIONS.DECLINE;
             }
 
-            return JSONGLE_ACTIONS.NONE;
+            return JSONGLE_ACTIONS.NOOP;
         case CALL_STATE.RINGING:
             return JSONGLE_ACTIONS.INFO;
         case CALL_STATE.PROCEEDED:
             return JSONGLE_ACTIONS.PROCEED;
         case CALL_STATE.OFFERING:
-            // TODO can be initiate, accept or transport
-            if (reason === "have-offer") {
+            if (establishingState === CALL_ESTABLISHING_STATE.GOT_LOCAL_CANDIDATE) {
+                return JSONGLE_ACTIONS.TRANSPORT;
+            }
+            if (offeringState === CALL_OFFERING_STATE.HAVE_OFFER) {
                 return JSONGLE_ACTIONS.INITIATE;
             }
-            if (reason === "have-answer") {
+            if (offeringState === CALL_OFFERING_STATE.HAVE_ANSWER) {
                 return JSONGLE_ACTIONS.ACCEPT;
             }
-
-            return JSONGLE_ACTIONS.TRANSPORT;
+            return JSONGLE_ACTIONS.NOOP;
         case CALL_STATE.ACTIVE:
             return JSONGLE_ACTIONS.INFO;
         default:
-            return JSONGLE_ACTIONS.NONE;
+            return JSONGLE_ACTIONS.NOOP;
     }
 };
 
@@ -46,59 +55,6 @@ const getReasonFromActionAndState = (action, state) => {
             return state;
         default:
             return CALL_STATE.NOOP;
-    }
-};
-
-const getDescriptionFromAction = (context, action) => {
-    switch (action) {
-        case JSONGLE_ACTIONS.PROPOSE:
-            return {
-                initiated: context._initiated ? context._initiated.toJSON() : null,
-                media: context._media,
-            };
-        case JSONGLE_ACTIONS.RETRACT:
-        case JSONGLE_ACTIONS.TERMINATE:
-        case JSONGLE_ACTIONS.DECLINE:
-            return {
-                ended: context._ended ? context._ended.toJSON() : null,
-                ended_reason: context._endedReason,
-            };
-        case JSONGLE_ACTIONS.INFO:
-            if (context._state === CALL_STATE.RINGING) {
-                return {
-                    rang: context._rang ? context._rang.toJSON() : null,
-                };
-            }
-
-            if (context._state === CALL_STATE.ACTIVE) {
-                return {
-                    actived: context._active ? context._active.toJSON() : null,
-                };
-            }
-            return {};
-        case JSONGLE_ACTIONS.PROCEED:
-            return {
-                proceeded: context._proceeded ? context._proceeded.toJSON() : null,
-            };
-        case JSONGLE_ACTIONS.INITIATE:
-            return {
-                offering: context._offering ? context._offering.toJSON() : null,
-                offer: context._localOffer,
-            };
-        case JSONGLE_ACTIONS.ACCEPT:
-            return {
-                offered: context._offered ? context._offered.toJSON() : null,
-                answer: context._localOffer,
-            };
-        case JSONGLE_ACTIONS.TRANSPORT:
-            const [candidate] = context._candidates.slice(-1);
-
-            return {
-                establishing: context._establishing ? context._establishing.toJSON() : null,
-                candidate,
-            };
-        default:
-            return {};
     }
 };
 
@@ -116,10 +72,13 @@ export default class Call {
         this._proceeded = null;
         this._offering = null;
         this._offered = null;
+        this._offeringState = CALL_OFFERING_STATE.HAVE_NONE;
         this._establishing = null;
+        this._establishingState = CALL_ESTABLISHING_STATE.HAVE_NO_CANDIDATE;
         this._active = null;
+        this._activeState = CALL_ACTIVE_STATE.IS_NOT_ACTIVE;
         this._ended = null;
-        this._reason = "";
+        this._endedReason = CALL_ENDED_REASON.EMPTY;
         this._localOffer = null;
         this._remoteOffer = null;
         this._candidates = [];
@@ -202,12 +161,28 @@ export default class Call {
         this._offered = value;
     }
 
+    get offeringState() {
+        return this._offeringState;
+    }
+
+    set offeringState(value) {
+        this._offeringState = value;
+    }
+
     get establishingAt() {
         return this._establishing;
     }
 
     set establishingAt(value) {
         this._establishing = value;
+    }
+
+    get establishingState() {
+        return this._establishingState;
+    }
+
+    set establishingState(value) {
+        this._establishingState = value;
     }
 
     get activeAt() {
@@ -218,12 +193,20 @@ export default class Call {
         this._active = value;
     }
 
-    get reason() {
-        return this._reason;
+    get activeState() {
+        return this._activeState;
     }
 
-    set reason(value) {
-        this._reason = value;
+    set activeState(value) {
+        this._activeState = value;
+    }
+
+    get endedReason() {
+        return this._endedReason;
+    }
+
+    set endedReason(value) {
+        this._endedReason = value;
     }
 
     get isActive() {
@@ -288,29 +271,23 @@ export default class Call {
         return this;
     }
 
-    activate(activateAt) {
-        this._state = CALL_STATE.ACTIVE;
-        this._active = activateAt;
-        return this;
-    }
-
     retract(endedAt) {
         this._state = CALL_STATE.ENDED;
         this._ended = endedAt;
-        this._reason = CALL_ENDED_REASON.RETRACTED;
+        this._endedReason = CALL_ENDED_REASON.RETRACTED;
         return this;
     }
 
     terminate(endedAt) {
         this._state = CALL_STATE.ENDED;
         this._ended = endedAt;
-        this._reason = CALL_ENDED_REASON.TERMINATED;
+        this._endedReason = CALL_ENDED_REASON.TERMINATED;
         return this;
     }
 
     abort(reason, abortedAt) {
         this._state = CALL_STATE.ENDED;
-        this._reason = reason;
+        this._endedReason = reason;
         this._ended = abortedAt;
         return this;
     }
@@ -323,7 +300,7 @@ export default class Call {
 
     decline(declinedAt) {
         this._state = CALL_STATE.ENDED;
-        this._reason = CALL_ENDED_REASON.DECLINED;
+        this._endedReason = CALL_ENDED_REASON.DECLINED;
         this._ended = declinedAt;
         return this;
     }
@@ -339,13 +316,18 @@ export default class Call {
     offer(offeredAt) {
         this._state = CALL_STATE.OFFERING;
         this._offering = offeredAt;
-        this._reason = "have-offer";
+        this._offeringState = CALL_OFFERING_STATE.HAVE_OFFER;
         return this;
     }
 
     answer(answeredAt) {
         this._offered = answeredAt;
-        this._reason = "have-answer";
+        if (this._offeringState === CALL_OFFERING_STATE.HAVE_ANSWER) {
+            this._offeringState = CALL_OFFERING_STATE.HAVE_BOTH;
+        } else {
+            this._offeringState = CALL_OFFERING_STATE.HAVE_ANSWER;
+        }
+
         return this;
     }
 
@@ -354,7 +336,11 @@ export default class Call {
             this._establishing = establishingAt;
         }
 
-        this._reason = "have-candidate";
+        if (!isLocalCandidate) {
+            this._establishingState = CALL_ESTABLISHING_STATE.GOT_REMOTE_CANDIDATE;
+        } else {
+            this._establishingState = CALL_ESTABLISHING_STATE.GOT_LOCAL_CANDIDATE;
+        }
 
         if (isLocalCandidate) {
             this._candidates.push(candidate);
@@ -365,20 +351,89 @@ export default class Call {
         return this;
     }
 
-    active(activedAt) {
+    active(activedAt, isLocal) {
         if (!this._active) {
             this._active = activedAt;
         }
 
         this._state = CALL_STATE.ACTIVE;
-        this._reason = "";
+        if (
+            this._activeState !== CALL_ACTIVE_STATE.IS_ACTIVE_LOCAL &&
+            this._activeState !== CALL_ACTIVE_STATE.IS_ACTIVE_REMOTE
+        ) {
+            if (isLocal) {
+                this._activeState = CALL_ACTIVE_STATE.IS_ACTIVE_LOCAL;
+            } else {
+                this._activeState = CALL_ACTIVE_STATE.IS_ACTIVE_REMOTE;
+            }
+        } else {
+            this._activeState = CALL_ACTIVE_STATE.IS_ACTIVE_BOTH_SIDE;
+        }
+
         return this;
     }
 
+    getDescriptionFromAction(action) {
+        switch (action) {
+            case JSONGLE_ACTIONS.PROPOSE:
+                return {
+                    initiated: this._initiated ? this._initiated.toJSON() : null,
+                    media: this._media,
+                };
+            case JSONGLE_ACTIONS.RETRACT:
+            case JSONGLE_ACTIONS.TERMINATE:
+            case JSONGLE_ACTIONS.DECLINE:
+                return {
+                    ended: this._ended ? this._ended.toJSON() : null,
+                };
+            case JSONGLE_ACTIONS.INFO:
+                if (this._state === CALL_STATE.RINGING) {
+                    return {
+                        rang: this._rang ? this._rang.toJSON() : null,
+                    };
+                }
+
+                if (this._state === CALL_STATE.ACTIVE) {
+                    return {
+                        actived: this._active ? this._active.toJSON() : null,
+                    };
+                }
+                return {};
+            case JSONGLE_ACTIONS.PROCEED:
+                return {
+                    proceeded: this._proceeded ? this._proceeded.toJSON() : null,
+                };
+            case JSONGLE_ACTIONS.INITIATE:
+                return {
+                    offering: this._offering ? this._offering.toJSON() : null,
+                    offer: this._localOffer,
+                };
+            case JSONGLE_ACTIONS.ACCEPT:
+                return {
+                    offered: this._offered ? this._offered.toJSON() : null,
+                    answer: this._localOffer,
+                };
+            case JSONGLE_ACTIONS.TRANSPORT:
+                const [candidate] = this._candidates.slice(-1);
+
+                return {
+                    establishing: this._establishing ? this._establishing.toJSON() : null,
+                    candidate,
+                };
+            default:
+                return {};
+        }
+    }
+
     jsongleze() {
-        const action = getActionFromStateAndReason(this._state, this._reason);
+        const action = getActionFromStateAndStep(
+            this._state,
+            this._endedReason,
+            this._offeringState,
+            this._establishingState
+        );
         const reason = getReasonFromActionAndState(action, this._state);
-        const description = getDescriptionFromAction(this, action);
+        const description = this.getDescriptionFromAction(action);
 
         return {
             id: generateNewId(),
@@ -408,11 +463,14 @@ export default class Call {
         cloned.rangAt = this._rang;
         cloned.proceededAt = this._proceeded;
         cloned.offeringAt = this._offering;
+        cloned.offeringState = this._offeringState;
         cloned.offeredAt = this._offered;
         cloned.establishingAt = this._establishing;
+        cloned.establishingState = this._establishingState;
         cloned.activeAt = this._active;
+        cloned.activeState = this._activeState;
         cloned.endedAt = this._ended;
-        cloned.reason = this._reason;
+        cloned.endedReason = this._endedReason;
         cloned.localOffer = this._localOffer;
         cloned.remoteOffer = this._remoteOffer;
         return cloned;

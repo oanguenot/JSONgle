@@ -6,7 +6,15 @@ import { setVerboseLog, debug, info } from "./utils/log";
 import { createStore } from "./data/Store";
 import { reducer as callReducer } from "./data/CallsReducer";
 import { reducer as peerReducer, PEER_ACTIONS } from "./data/PeerReducer";
-import { CALL_STATE, MEDIA, CALL_DIRECTION } from "./protocol/jsongle";
+import {
+    CALL_STATE,
+    CALL_MEDIA,
+    CALL_DIRECTION,
+    CALL_ENDED_REASON,
+    CALL_OFFERING_STATE,
+    CALL_ACTIVE_STATE,
+    CALL_ESTABLISHING_STATE,
+} from "./protocol/jsongle";
 
 const moduleName = "jsongle-indx";
 
@@ -233,10 +241,10 @@ export default class JSONgle {
     }
 
     /**
-     * Definition of type MEDIA
+     * Definition of type CALL_MEDIA
      */
-    static get MEDIA() {
-        return MEDIA;
+    static get CALL_MEDIA() {
+        return CALL_MEDIA;
     }
 
     /**
@@ -244,5 +252,33 @@ export default class JSONgle {
      */
     static get CALL_DIRECTION() {
         return CALL_DIRECTION;
+    }
+
+    /**
+     * Definition of type CALL_ENDED_REASON
+     */
+    static get CALL_ENDED_REASON() {
+        return CALL_ENDED_REASON;
+    }
+
+    /**
+     * Definition of type CALL_OFFERING_STATE
+     */
+    static get CALL_OFFERING_STATE() {
+        return CALL_OFFERING_STATE;
+    }
+
+    /**
+     * Definition of type CALL_ACTIVE_STATE
+     */
+    static get CALL_ACTIVE_STATE() {
+        return CALL_ACTIVE_STATE;
+    }
+
+    /**
+     * Definition of type CALL_ESTABLISHING_STATE
+     */
+    static get CALL_ESTABLISHING_STATE() {
+        return CALL_ESTABLISHING_STATE;
     }
 }

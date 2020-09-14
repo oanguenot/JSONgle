@@ -1,4 +1,5 @@
 import { debug } from "../utils/log";
+import { JSONGLE_ACTIONS } from "../protocol/jsongle";
 
 const moduleNameSend = "transport ->";
 const moduleNameReceived = "transport <-";
@@ -16,7 +17,7 @@ export default class Transport {
             // TODO: check message integerity: has message.action ?
             debug(
                 moduleNameReceived,
-                `receive message ${message.id} with action '${message.jsongle.action}' and reason '${message.jsongle.reason}'`,
+                `receive message ${message.id} with action '${message.jsongle.action}' and reason '${message.jsongle.reason}'`
             );
             callback.call(context, message);
         });
@@ -30,6 +31,10 @@ export default class Transport {
         if (!this._transport.out) {
             throw new Error("Missing handler 'out' on transport");
         }
+        if (message.action === JSONGLE_ACTIONS.NOOP) {
+            throw new Error("Incorrect 'action' - noop");
+        }
+
         debug(moduleNameSend, `send message ${message.id} with action '${message.jsongle.action}'`);
         this._transport.out(message);
     }

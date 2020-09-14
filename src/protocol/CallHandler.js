@@ -70,6 +70,9 @@ export default class CallHandler {
                     new Date(message.jsongle.description.establishing)
                 );
                 break;
+            case JSONGLE_ACTIONS.TERMINATE:
+                this.retractOrTerminate(false, new Date(message.jsongle.description.ended));
+                break;
             default:
                 break;
         }
@@ -204,13 +207,13 @@ export default class CallHandler {
         debug(moduleName, `ring call '${this._currentCall.id}'`);
         const ringingMsg = this._currentCall.ringing(ringingAt).jsongleze();
 
+        this.fireOnCallStateChanged();
+
         if (isNewCall) {
             this.fireOnCall();
             this._callStore.dispatch({ type: CALL_ACTIONS.ANSWER_CALL, payload: {} });
             this._transport.sendMessage(ringingMsg);
         }
-
-        this.fireOnCallStateChanged();
     }
 
     offer(shouldSendMessage = true, offer, offeredAt) {
@@ -227,6 +230,7 @@ export default class CallHandler {
         }
 
         this._currentCall.offer(offeredAt);
+        this.fireOnCallStateChanged();
 
         if (shouldSendMessage) {
             const offerMsg = this._currentCall.jsongleze();
@@ -235,8 +239,6 @@ export default class CallHandler {
             this.fireOnOfferReceived(offer);
             this.fireOnOfferNeeded();
         }
-
-        this.fireOnCallStateChanged();
     }
 
     answer(shouldSendMessage = true, offer, answeredAt) {
@@ -253,6 +255,7 @@ export default class CallHandler {
         }
 
         this._currentCall.answer(answeredAt);
+        this.fireOnCallStateChanged();
 
         if (shouldSendMessage) {
             const answerMsg = this._currentCall.jsongleze();
@@ -260,8 +263,6 @@ export default class CallHandler {
         } else {
             this.fireOnOfferReceived(offer);
         }
-
-        this.fireOnCallStateChanged();
     }
 
     offerCandidate(shouldSendMessage, candidate, establishedAt) {
@@ -272,6 +273,7 @@ export default class CallHandler {
         }
 
         this._currentCall.establish(candidate, establishedAt, shouldSendMessage);
+        this.fireOnCallStateChanged();
 
         if (shouldSendMessage) {
             const offerMsg = this._currentCall.jsongleze();
@@ -279,8 +281,6 @@ export default class CallHandler {
         } else {
             this.fireOnCandidateReceived(candidate);
         }
-
-        this.fireOnCallStateChanged();
     }
 
     active(shouldSendMessage, activedAt) {
@@ -290,14 +290,13 @@ export default class CallHandler {
             debug(moduleName, `received active for call '${this._currentCall.id}'`);
         }
 
-        this._currentCall.active(activedAt);
+        this._currentCall.active(activedAt, shouldSendMessage);
+        this.fireOnCallStateChanged();
 
         if (shouldSendMessage) {
             const activeMsg = this._currentCall.jsongleze();
             this._transport.sendMessage(activeMsg);
         }
-
-        this.fireOnCallStateChanged();
     }
 
     noop() {
