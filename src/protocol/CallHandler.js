@@ -83,7 +83,7 @@ export default class CallHandler {
         switch (jsongle.reason) {
             case SESSION_INFO_REASON.UNREACHABLE:
             case SESSION_INFO_REASON.UNKNOWN_SESSION:
-                this.abort(jsongle.reason, new Date(jsongle.description.aborted));
+                this.abort(jsongle.reason, new Date(jsongle.description.ended));
                 break;
             case SESSION_INFO_REASON.TRYING:
                 this.trying(new Date(jsongle.description.tried));

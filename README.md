@@ -91,13 +91,9 @@ const jsongle = new JSONGle({
 });
 ```
 
-## API
+## API Methods
 
-JSONgle offers the following methods and events.
-
-### Methods
-
-#### Call
+### Call
 
 This method calls a user.
 
@@ -120,7 +116,7 @@ The method accepts a second optional parameter which is the media used. This is 
 jsongle.call(id, JSONGle.MEDIA.AUDIO);
 ```
 
-#### Decline
+### Decline
 
 When call is ringing (`state` === `ringing`) and initiated from someone else (`direction` === `JSONgle.DIRECTION.INCOMING`), you have the possibility to decline it.
 
@@ -134,7 +130,7 @@ jsongle.decline();
 
 A message will be sent to the initiator and the call will be ended (`state` === `ended`).
 
-#### Proceed
+### Proceed
 
 In the same manner, when the call is ringing (`state`=== `ringing`) and initiated from someone else (`direction` === `JSONgle.DIRECTION.INCOMING`), you have the possibility to proceed it which means you want to answer the call.
 
@@ -148,7 +144,7 @@ jsongle.proceed();
 
 A message will be sent to the initiator and the call will move to state `proceeded` that will trigger the negotiation step one step further.
 
-#### Send and receive offer
+### Send and receive offer
 
 If the call has been proceeded, the WebRTC negotiation starts and the **JSONgle** library will send the event `onofferneeded` when it needs the local SDP to send it to the remote peer.
 
@@ -184,7 +180,7 @@ jsongle.onofferreceived = (remoteDescription) {
 
 ```
 
-#### Send and receive ICE candidates
+### Send and receive ICE candidates
 
 ICE candidates should be exchanged the same way between the two peers.
 
@@ -208,7 +204,7 @@ jsongle.oncandidatereceived = async (candidate) => {
 };
 ```
 
-#### Set call as active
+### Set call as active
 
 In order to inform the recipient that everything is ok on your side, you have to send a `session-info` message with a `reason=active`. This can be done by calling the method `setAsActive()` when the WebRTC call is established.
 
@@ -222,7 +218,7 @@ pc.onconnectionstatechange = () => {
 
 In the same way, your application will receive a `session-info` with a `reason=active` from your recipient. This will trigger the event `oncallstatechanged`.
 
-#### End
+### End
 
 At anytime, an initiated call can be ended by the issuer or the responder. When the call not yet active, the issuer can **retract** it. When the call is active, both can **end** that call.
 
@@ -237,7 +233,7 @@ jsongle.oncallended = (call) => {
 jsongle.end();
 ```
 
-#### Ticket
+### Ticket
 
 For each call done, a ticket is generated and can be retrieved through the getter `ticket` or by listening to the event `onticket`. The event is fired once the call has ended.
 
@@ -250,7 +246,7 @@ jsongle.onticket = (ticket) => {
 };
 ```
 
-### Events
+## API Events
 
 You can subscribe to the following events on the **JSONgle** instance
 
@@ -272,6 +268,80 @@ jsongle.oncallstatechanged = (call) => {
 };
 ```
 
+## Server side
+
+You can send additionnal messages from your server to the issuer for handling specific cases
+
+### Unreachable recipient
+
+When the issuer sent the **session-propose** message, once received, the server could check if the recipient exists and is connected.
+
+If the recipient can't be reachable, a **session-info** message with `reason=unreachable` could be sent to the issuer to inform him that the call can't be proceeded and to change the call information to the `state=ended` with `reason=unreachable`.
+
+See paragraph **Messages exchanged** to have the description of the message to send.
+
+```js
+// Example using socket-io on server side
+socket.on("jsongle", (message) => {
+    // Check that the recipient exists and is connected
+    if (!(message.to in users)) {
+        const abortMsg = {
+            id: "<your_random_message_id>",
+            from: "server",
+            to: message.from,
+            jsongle: {
+                sid: message.jsongle.sid,
+                action: "session-info",
+                reason: "unreachable",
+                initiator: message.jsongle.initiator,
+                responder: message.jsongle.responder,
+                description: {
+                    ended: new Date().toJSON(),
+                },
+            },
+        };
+
+        // Send a try to issuer
+        socket.emit("jsongle", abortMsg);
+        return;
+    }
+});
+```
+
+### Trying
+
+When the issuer sent the **session-propose** message and once the server has found the recipient, the server could send a **session-info** message with `reason=trying` to the issuer to inform him that the call is routing to the recipient.
+
+See paragraph **Messages exchanged** to have the description of the message to send.
+
+```js
+// Example using socket-io on server side
+socket.on("jsongle", (message) => {
+    // Check the recipient and the message
+    if (message.to in users && message.jsongle.action === "session-propose") {
+        const abortMsg = {
+            id: "<your_random_message_id>",
+            from: "server",
+            to: message.from,
+            jsongle: {
+                sid: message.jsongle.sid,
+                action: "session-info",
+                reason: "trying",
+                initiator: message.jsongle.initiator,
+                responder: message.jsongle.responder,
+                description: {
+                    tried: new Date().toJSON(),
+                },
+            },
+        };
+
+        // Send a try to issuer
+        socket.emit("jsongle", abortMsg);
+        return;
+    }
+});
+```
+
 ## Call State
 
 A `Call` can have the following states:
@@ -285,7 +355,7 @@ A `Call` can have the following states:
 | `offering`  | Call has been accepted by the remote peer and is being negotiated                                                    | `have-offer`<br>`have-answer`<br>`have-both`                     |
 | `active`    | Call is active                                                                                                       | `is-active-local`<br>`is-active-remote`<br>`is-active-both-side` |
 | `releasing` | Call is releasing by a peer                                                                                          |                                                                  |
-| `ended`     | Call is ended                                                                                                        | `retracted`<br>`declined`<br>`terminated`                        |
+| `ended`     | Call is ended                                                                                                        | `retracted`<br>`declined`<br>`terminated`<br>`unreachable`       |
 
 ### Call lifecycle from the caller point of view
 
@@ -332,6 +402,26 @@ The **session-propose** message is sent by the issuer to propose a session (a ca
             "initiated": "2020-09-05T19:31:34.186Z",
             "media": "audio"
         }
+    }
+}
+```
+
+### session-info - unreachable
+
+When a call is initiated to a remote peer, the server could answer to the initiator by a message of type **session-info** containing a `reason=unreachable` in order to inform the issuer that the recipient can't be joined.
+
+```json
+{
+    "id": "001ad89f-43f4-423f-9055-e24813e9c82a",
+    "from": "server",
+    "to": "70001",
+    "jsongle": {
+        "sid": "23dfe5aa-3e13-4203-8650-3a11bec2d373",
+        "action": "session-info",
+        "reason": "unreachable",
+        "initiator": "70001",
+        "responder": "12334",
+        "description": { "ended": "2020-09-15T13:36:31.151Z" }
     }
 }
 ```
