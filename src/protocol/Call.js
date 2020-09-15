@@ -251,6 +251,22 @@ export default class Call {
         this._remoteOffer = value;
     }
 
+    get localCandidates() {
+        return this._candidates;
+    }
+
+    set localCandidates(value) {
+        this._candidates = value;
+    }
+
+    get remoteCandidates() {
+        return this._remoteCandidates;
+    }
+
+    set remoteCandidates(value) {
+        this._remoteCandidates = value;
+    }
+
     isFrom(userId) {
         return this._caller === userId;
     }
@@ -455,6 +471,33 @@ export default class Call {
         };
     }
 
+    ticketize() {
+        return {
+            sid: this._id,
+            initiator: this._caller,
+            responder: this._callee,
+            direction: this._direction,
+            media: this._media,
+            state: this._state,
+            triedAt: this._tried,
+            rangAt: this._rang,
+            proceededAt: this._proceeded,
+            offeringAt: this._offering,
+            offeredAt: this._offered,
+            offeringState: this._offeringState,
+            establishingAt: this._establishing,
+            establishingState: this._establishingState,
+            activeAt: this._active,
+            activeState: this._activeState,
+            endedAt: this._ended,
+            endedReason: this._endedReason,
+            localOffer: this._localOffer,
+            remoteOffer: this._remoteOffer,
+            localCandidates: this._candidates,
+            remoteCandidates: this._remoteCandidates,
+        };
+    }
+
     clone() {
         const cloned = new Call(this._caller, this._callee, this._media, this._direction, this._id, this._initiated);
 
@@ -473,6 +516,9 @@ export default class Call {
         cloned.endedReason = this._endedReason;
         cloned.localOffer = this._localOffer;
         cloned.remoteOffer = this._remoteOffer;
+        cloned.candidates = this._candidates;
+        cloned.remoteCandidates = this._remoteCandidates;
+
         return cloned;
     }
 }

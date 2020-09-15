@@ -16,7 +16,7 @@ In fact, only few information need to be exchanged: a **SDP** and some **ICE Can
 
 So what **JSONgle** does is to ask for a local SDP in one side and its associated candidates and send them to the remote peer and by asking to that remote peer in a same maner his local description and some candidates that are given back to the initial sender. And that all!
 
-Additionnaly to that, **JSONgle** computes internally a **Call State** machine that can be retrieved throught some events and generate at the end of the communication a **log ticket** that summarize the evolution of that call. (to come).
+Additionnaly to that, **JSONgle** computes internally a **Call State** machine that can be retrieved throught some events and generate at the end of the communication a **log ticket** that summarizes the call progress and information.
 
 ## WebRTC Adapter
 
@@ -237,6 +237,19 @@ jsongle.oncallended = (call) => {
 jsongle.end();
 ```
 
+#### Ticket
+
+For each call done, a ticket is generated and can be retrieved through the getter `ticket` or by listening to the event `onticket`. The event is fired once the call has ended.
+
+```js
+// Got a ticket on a call in progress at any time
+const ticket = jsongle.ticket;
+
+jsongle.onticket = (ticket) => {
+    //Get the generated ticket once the call has ended
+};
+```
+
 ### Events
 
 You can subscribe to the following events on the **JSONgle** instance
@@ -249,6 +262,7 @@ You can subscribe to the following events on the **JSONgle** instance
 | `onofferneeded`       | Fired when a call needs a SDP offer.<br>The event contains the `Call`<br>The application should get the local description (SDP) and answer as soon as possible by calling the method `sendOffer` with the offer generated from the browser. |
 | `onofferreceived`     | Fired when a call received a SDP offer.<br>The event contains the `RTCSessionDescription` received from the recipient.<br>The application should give that offer to the `RTCPeerConnection`.                                                |
 | `oncandidatereceived` | Fired when a call received an ICE candidate.<br>The event contains the `RTCIceCandidate` received from the recipient.<br>The application should give that candidate to the `RTCPeerConnection`.                                             |
+| `onticket`            | Fired when the call has ended.<br>The event contains a sum-up of all call information.                                                                                                                                                      |
 
 Here is an exemple of registering to an event
 
@@ -540,7 +554,7 @@ The **session-terminate** message is sent by the issuer or the responder when th
         "reason": "",
         "initiator": "70001",
         "responder": "70002",
-        "description": { "ended": "2020-09-14T19:41:35.124Z", "ended_reason": "terminated" }
+        "description": { "ended": "2020-09-14T19:41:35.124Z" }
     }
 }
 ```

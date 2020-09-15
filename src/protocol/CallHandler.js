@@ -20,6 +20,7 @@ export default class CallHandler {
             onofferneeded: null,
             onofferreceived: null,
             oncandidatereceived: null,
+            onticket: null,
         };
     }
 
@@ -141,6 +142,7 @@ export default class CallHandler {
         this._currentCall.decline(declinedAt);
         this.fireOnCallStateChanged();
         this.fireOnCallEnded();
+        this.fireOnTicket();
 
         if (shouldSendMessage) {
             const msg = this._currentCall.jsongleze();
@@ -176,6 +178,7 @@ export default class CallHandler {
 
         this.fireOnCallStateChanged();
         this.fireOnCallEnded();
+        this.fireOnTicket();
 
         if (shouldSendMessage) {
             const msg = this._currentCall.jsongleze();
@@ -198,6 +201,7 @@ export default class CallHandler {
 
         this.fireOnCallStateChanged();
         this.fireOnCallEnded();
+        this.fireOnTicket();
 
         this._callStore.dispatch({ type: CALL_ACTIONS.RELEASE_CALL, payload: {} });
         this._currentCall = null;
@@ -345,6 +349,13 @@ export default class CallHandler {
     fireOnCandidateReceived(candidate) {
         if (this._callbacks.oncandidatereceived) {
             this._callbacks.oncandidatereceived(candidate);
+        }
+    }
+
+    fireOnTicket() {
+        if (this._callbacks.onticket) {
+            const ticket = this._currentCall.ticketize();
+            this._callbacks.onticket(ticket);
         }
     }
 

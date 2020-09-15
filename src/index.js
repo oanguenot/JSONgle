@@ -71,6 +71,17 @@ export default class JSONgle {
     }
 
     /**
+     * Get a call ticket
+     */
+    get ticket() {
+        if (!this.currentCall) {
+            throw Error("Can't generate a ticket - no call");
+        }
+
+        return this.currentCall.ticketize();
+    }
+
+    /**
      * Call a peer
      * @param {String} toId A String representing the peer id
      * @param {String} withMedia A String representing the media. Can be 'audio' or 'video'
@@ -129,6 +140,54 @@ export default class JSONgle {
     }
 
     /**
+     * Send an offer to recipient
+     * @param {*} offer The Offer to send
+     */
+    sendOffer(offer) {
+        if (!this.currentCall) {
+            throw Error("Can't send offer - not in a call");
+        }
+
+        if (!offer) {
+            throw Error("Can't send offer - no offer");
+        }
+
+        info(moduleName, `send an offer of type '${offer.type}'`);
+
+        if (offer.type === "offer") {
+            this._callHandler.offer(true, offer, new Date());
+        } else {
+            this._callHandler.answer(true, offer, new Date());
+        }
+    }
+
+    setAsActive() {
+        if (!this.currentCall) {
+            throw Error("Can't send offer - not in a call");
+        }
+
+        info(moduleName, "set call as 'active'");
+
+        this._callHandler.active(true, new Date());
+    }
+
+    /**
+     * Send the candidate to the recipient
+     * @param {*} candidate The candidate to send
+     */
+    sendCandidate(candidate) {
+        if (!this.currentCall) {
+            throw Error("Can't send candidate - not in a call");
+        }
+
+        if (!candidate) {
+            throw Error("Can't send candidate - no candidate");
+        }
+
+        this._callHandler.offerCandidate(true, candidate, new Date());
+    }
+
+    /**
      * Register to event 'oncallstatechanged'
      * Fired when the state of the call has changed
      */
@@ -177,60 +236,20 @@ export default class JSONgle {
     }
 
     /**
+     * Register to event 'onticket'
+     * Fired when the call is ended
+     */
+    set onticket(callback) {
+        this._callHandler.registerCallback("onticket", callback);
+    }
+
+    /**
      * Set verbose log.
      * True to set log level to verbose, false otherwise
      */
     set verboseLog(isVerbose) {
         info(moduleName, `verbose log is activated '${isVerbose}'`);
         setVerboseLog(isVerbose);
-    }
-
-    /**
-     * Send an offer to recipient
-     * @param {*} offer The Offer to send
-     */
-    sendOffer(offer) {
-        if (!this.currentCall) {
-            throw Error("Can't send offer - not in a call");
-        }
-
-        if (!offer) {
-            throw Error("Can't send offer - no offer");
-        }
-
-        info(moduleName, `send an offer of type '${offer.type}'`);
-
-        if (offer.type === "offer") {
-            this._callHandler.offer(true, offer, new Date());
-        } else {
-            this._callHandler.answer(true, offer, new Date());
-        }
-    }
-
-    setAsActive() {
-        if (!this.currentCall) {
-            throw Error("Can't send offer - not in a call");
-        }
-
-        info(moduleName, "set call as 'active'");
-
-        this._callHandler.active(true, new Date());
-    }
-
-    /**
-     * Send the candidate to the recipient
-     * @param {*} candidate The candidate to send
-     */
-    sendCandidate(candidate) {
-        if (!this.currentCall) {
-            throw Error("Can't send candidate - not in a call");
-        }
-
-        if (!candidate) {
-            throw Error("Can't send candidate - no candidate");
-        }
-
-        this._callHandler.offerCandidate(true, candidate, new Date());
     }
 
     /**
