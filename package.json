@@ -1,7 +1,7 @@
 {
     "name": "jsongle",
-    "version": "1.0.2",
-    "description": "JSON based library for handling WebRTC Jingle protocol",
+    "version": "1.0.3",
+    "description": "JavaScript library for handling WebRTC signaling protocol based on JSON and Jingle",
     "main": "dist/JSONgle.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
