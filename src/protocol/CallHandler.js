@@ -1,11 +1,80 @@
-import { debug, warn } from "../utils/log";
+import { debug, warn, error } from "../utils/log";
+import {
+    JSONGLE_ACTIONS,
+    SESSION_INFO_REASON,
+    CALL_DIRECTION,
+    CALL_STATE,
+    STATE_ACTIONS,
+    CALL_ENDED_REASON,
+    STATES,
+} from "./jsongle";
 import Transport from "../transport/Transport";
 import { CALL_ACTIONS } from "../data/CallsReducer";
 import Call from "./Call";
-import { JSONGLE_ACTIONS, SESSION_INFO_REASON, CALL_DIRECTION } from "./jsongle";
-import { error } from "loglevel";
 
 const moduleName = "call-handler";
+
+const getActionFromJSONgleAction = (jsongleAction, reason) => {
+    switch (jsongleAction) {
+        case JSONGLE_ACTIONS.PROPOSE:
+            return STATE_ACTIONS.PROPOSE;
+        case JSONGLE_ACTIONS.INFO:
+            switch (reason) {
+                case SESSION_INFO_REASON.TRYING:
+                    return STATE_ACTIONS.TRY;
+                case SESSION_INFO_REASON.RINGING:
+                    return STATE_ACTIONS.RING;
+                case SESSION_INFO_REASON.UNREACHABLE:
+                    return STATE_ACTIONS.UNREACH;
+                case SESSION_INFO_REASON.ACTIVE:
+                    return STATE_ACTIONS.ACTIVATE;
+                default:
+                    return null;
+            }
+        case JSONGLE_ACTIONS.RETRACT:
+            return STATE_ACTIONS.RETRACT;
+        case JSONGLE_ACTIONS.DECLINE:
+            return STATE_ACTIONS.DECLINE;
+        case JSONGLE_ACTIONS.PROCEED:
+            return STATE_ACTIONS.PROCEED;
+        case JSONGLE_ACTIONS.INITIATE:
+            return STATE_ACTIONS.INITIATE;
+        case JSONGLE_ACTIONS.ACCEPT:
+            return STATE_ACTIONS.ACCEPT;
+        case JSONGLE_ACTIONS.TRANSPORT:
+            return STATE_ACTIONS.TRANSPORT;
+        case JSONGLE_ACTIONS.TERMINATE:
+            switch (reason) {
+                case CALL_ENDED_REASON.CLEAR:
+                    return STATE_ACTIONS.END;
+                case CALL_ENDED_REASON.CANCELED:
+                    return STATE_ACTIONS.CANCEL;
+                default:
+                    return null;
+            }
+        default:
+            return null;
+    }
+};
+
+const isActionValid = (action, state) => {
+    const currentState = state || CALL_STATE.NEW;
+
+    // Return false if current state is not handled
+    if (!(currentState in STATES)) {
+        error(moduleName, `state ${state} is not handled`);
+        return false;
+    }
+
+    // Return false if action is not handled in that state
+    if (!STATES[currentState].includes(action)) {
+        error(moduleName, `action ${action} not authorized in state ${state}`);
+        return false;
+    }
+
+    // Elsewhere return true
+    return true;
+};
 
 export default class CallHandler {
     constructor(callStore, transportCfg) {
@@ -25,79 +94,96 @@ export default class CallHandler {
     }
 
     onMessageFromTransport(message) {
+        const route = (action, msg) => {
+            const routing = {};
+            routing[STATE_ACTIONS.PROPOSE] = () => {
+                this._currentCall = new Call(
+                    msg.from,
+                    msg.to,
+                    msg.jsongle.description.media,
+                    CALL_DIRECTION.INCOMING,
+                    msg.jsongle.sid,
+                    new Date(msg.jsongle.description.initiated)
+                );
+                this.ringing(true, new Date());
+            };
+            routing[STATE_ACTIONS.TRY] = () => {
+                this.trying(new Date(msg.jsongle.description.tried));
+            };
+            routing[STATE_ACTIONS.RING] = () => {
+                this.ringing(false, new Date(msg.jsongle.description.rang));
+            };
+
+            routing[STATE_ACTIONS.UNREACH] = () => {
+                this.abort(message.jsongle.reason, new Date(msg.jsongle.description.ended));
+            };
+
+            routing[STATE_ACTIONS.RETRACT] = () => {
+                this.retractOrTerminate(false, new Date(msg.jsongle.description.ended));
+            };
+
+            routing[STATE_ACTIONS.DECLINE] = () => {
+                this.decline(false, new Date(message.jsongle.description.ended));
+            };
+
+            routing[STATE_ACTIONS.PROCEED] = () => {
+                this.proceed(false, new Date(message.jsongle.description.proceeded));
+            };
+
+            routing[STATE_ACTIONS.INITIATE] = () => {
+                this.offer(false, msg.jsongle.description.offer, new Date(msg.jsongle.description.offering));
+            };
+
+            routing[STATE_ACTIONS.ACCEPT] = () => {
+                this.answer(false, msg.jsongle.description.answer, new Date(msg.jsongle.description.offered));
+            };
+
+            routing[STATE_ACTIONS.TRANSPORT] = () => {
+                this.offerCandidate(
+                    false,
+                    msg.jsongle.description.candidate,
+                    new Date(msg.jsongle.description.establishing)
+                );
+            };
+
+            routing[STATE_ACTIONS.CANCEL] = () => {
+                this.retractOrTerminate(false, new Date(message.jsongle.description.ended));
+            };
+
+            routing[STATE_ACTIONS.CLEAR] = () => {
+                this.retractOrTerminate(false, new Date(message.jsongle.description.ended));
+            };
+
+            if (!(action in routing)) {
+                warn(moduleName, `transition '${action}' is not yet implemented`);
+                return;
+            }
+
+            debug(moduleName, `transit to action ${action}`);
+            routing[action]();
+        };
+
         if (!message.jsongle) {
             warn(moduleName, "can't handle message - not a JSONgle message");
             return;
         }
 
-        const { action } = message.jsongle;
+        const { action, reason } = message.jsongle;
 
         debug(moduleName, `handle action '${action}'`);
+        const stateAction = getActionFromJSONgleAction(action, reason);
+        debug(moduleName, `deduced state action is '${stateAction}'`);
+        const currentState = this._currentCall ? this._currentCall.state : CALL_STATE.NEW;
+        debug(moduleName, `current state is '${currentState}'`);
+        const isStateActionValid = isActionValid(stateAction, currentState);
 
-        switch (action) {
-            case JSONGLE_ACTIONS.INFO:
-                this.handleSessionInfoMessage(message.jsongle);
-                break;
-            case JSONGLE_ACTIONS.PROPOSE:
-                this._currentCall = new Call(
-                    message.from,
-                    message.to,
-                    message.jsongle.description.media,
-                    CALL_DIRECTION.INCOMING,
-                    message.jsongle.sid,
-                    new Date(message.jsongle.description.initiated)
-                );
-                this.ringing(true, new Date());
-                break;
-            case JSONGLE_ACTIONS.RETRACT:
-                this.retractOrTerminate(false, new Date(message.jsongle.description.ended));
-                break;
-            case JSONGLE_ACTIONS.DECLINE:
-                this.decline(false, new Date(message.jsongle.description.ended));
-                break;
-            case JSONGLE_ACTIONS.PROCEED:
-                this.proceed(false, new Date(message.jsongle.description.proceeded));
-                break;
-            case JSONGLE_ACTIONS.INITIATE:
-                this.offer(false, message.jsongle.description.offer, new Date(message.jsongle.description.offering));
-                break;
-            case JSONGLE_ACTIONS.ACCEPT:
-                this.answer(false, message.jsongle.description.answer, new Date(message.jsongle.description.offered));
-                break;
-            case JSONGLE_ACTIONS.TRANSPORT:
-                this.offerCandidate(
-                    false,
-                    message.jsongle.description.candidate,
-                    new Date(message.jsongle.description.establishing)
-                );
-                break;
-            case JSONGLE_ACTIONS.TERMINATE:
-                this.retractOrTerminate(false, new Date(message.jsongle.description.ended));
-                break;
-            default:
-                break;
+        if (!isStateActionValid) {
+            warn(moduleName, `'${stateAction}' is not valid - don't execute transition`);
+            return;
         }
-    }
 
-    handleSessionInfoMessage(jsongle) {
-        switch (jsongle.reason) {
-            case SESSION_INFO_REASON.UNREACHABLE:
-            case SESSION_INFO_REASON.UNKNOWN_SESSION:
-                this.abort(jsongle.reason, new Date(jsongle.description.ended));
-                break;
-            case SESSION_INFO_REASON.TRYING:
-                this.trying(new Date(jsongle.description.tried));
-                break;
-            case SESSION_INFO_REASON.RINGING:
-                this.ringing(false, new Date(jsongle.description.rang));
-                break;
-            case SESSION_INFO_REASON.ACTIVE:
-                this.active(false, new Date(jsongle.description.actived));
-                break;
-            default:
-                this.noop();
-                break;
-        }
+        debug(moduleName, `'${stateAction}' is valid - execute transition`);
+        route(stateAction, message);
     }
 
     propose(fromId, toId, media) {
@@ -106,12 +192,15 @@ export default class CallHandler {
         debug(moduleName, `propose call ${this._currentCall.id} to '${toId}' with '${media}'`);
 
         this.fireOnCall();
+        this.fireOnCallStateChanged();
 
         this._callStore.dispatch({ type: CALL_ACTIONS.INITIATE_CALL, payload: {} });
 
-        const proposeMsg = this._currentCall.propose().jsongleze();
+        const proposeMsg = this._currentCall.transitToPropose().jsongleze();
 
         this._transport.sendMessage(proposeMsg);
+
+        return this;
     }
 
     proceed(shouldSendMessage = true, proceededAt) {
@@ -121,7 +210,7 @@ export default class CallHandler {
             debug(moduleName, `call ${this._currentCall.id} proceeded`);
         }
 
-        this._currentCall.proceed(proceededAt);
+        this._currentCall.transitToProceeded(proceededAt);
         this.fireOnCallStateChanged();
 
         if (shouldSendMessage) {
@@ -139,7 +228,7 @@ export default class CallHandler {
             debug(moduleName, `call ${this._currentCall.id} declined`);
         }
 
-        this._currentCall.decline(declinedAt);
+        this._currentCall.transitToEndedWithReasonDeclined(declinedAt);
         this.fireOnCallStateChanged();
         this.fireOnCallEnded();
         this.fireOnTicket();
@@ -166,14 +255,14 @@ export default class CallHandler {
             } else {
                 debug(moduleName, `call ${this._currentCall.id} retracted`);
             }
-            this._currentCall.retract(ended);
+            this._currentCall.transitToEndedWithReasonRetracted(ended);
         } else {
             if (shouldSendMessage) {
                 debug(moduleName, `terminate call '${this._currentCall.id}'`);
             } else {
                 debug(moduleName, `call ${this._currentCall.id} terminated`);
             }
-            this._currentCall.terminate(ended);
+            this._currentCall.transitToEndedWithReasonTerminated(ended);
         }
 
         this.fireOnCallStateChanged();
@@ -191,13 +280,13 @@ export default class CallHandler {
 
     trying(triedAt) {
         debug(moduleName, `try call '${this._currentCall.id}'`);
-        this._currentCall.trying(triedAt);
+        this._currentCall.transitToTrying(triedAt);
         this.fireOnCallStateChanged();
     }
 
     abort(reason, abortedAt) {
         debug(moduleName, `abort call '${this._currentCall.id}'`);
-        this._currentCall.abort(reason, abortedAt);
+        this._currentCall.transitToEndedWithReasonAborted(reason, abortedAt);
 
         this.fireOnCallStateChanged();
         this.fireOnCallEnded();
@@ -209,7 +298,7 @@ export default class CallHandler {
 
     ringing(isNewCall = false, ringingAt) {
         debug(moduleName, `ring call '${this._currentCall.id}'`);
-        const ringingMsg = this._currentCall.ringing(ringingAt).jsongleze();
+        const ringingMsg = this._currentCall.transitToRinging(ringingAt).jsongleze();
 
         this.fireOnCallStateChanged();
 
@@ -233,7 +322,7 @@ export default class CallHandler {
             this._currentCall.setRemoteOffer(offer);
         }
 
-        this._currentCall.offer(offeredAt);
+        this._currentCall.transitToOfferingWithReasonHaveOffer(offeredAt);
         this.fireOnCallStateChanged();
 
         if (shouldSendMessage) {
@@ -294,7 +383,7 @@ export default class CallHandler {
             debug(moduleName, `received active for call '${this._currentCall.id}'`);
         }
 
-        this._currentCall.active(activedAt, shouldSendMessage);
+        this._currentCall.transitToActive(activedAt, shouldSendMessage);
         this.fireOnCallStateChanged();
 
         if (shouldSendMessage) {

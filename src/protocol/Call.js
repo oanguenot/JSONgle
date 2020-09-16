@@ -271,68 +271,141 @@ export default class Call {
         return this._caller === userId;
     }
 
-    propose() {
+    transitToPropose() {
         return this;
     }
 
-    trying(triedAt) {
+    transitToTrying(triedAt) {
         this._state = CALL_STATE.TRYING;
         this._tried = triedAt;
         return this;
     }
 
-    ringing(ringingAt) {
+    transitToRinging(ringingAt) {
         this._state = CALL_STATE.RINGING;
         this._rang = ringingAt;
         return this;
     }
 
-    retract(endedAt) {
+    transitToEndedWithReasonRetracted(endedAt) {
+        if (!this._ended) {
+            this._ended = endedAt;
+        }
         this._state = CALL_STATE.ENDED;
         this._ended = endedAt;
         this._endedReason = CALL_ENDED_REASON.RETRACTED;
         return this;
     }
 
-    terminate(endedAt) {
+    transitToEndedWithReasonTerminated(endedAt) {
+        if (!this._ended) {
+            this._ended = endedAt;
+        }
         this._state = CALL_STATE.ENDED;
-        this._ended = endedAt;
         this._endedReason = CALL_ENDED_REASON.TERMINATED;
         return this;
     }
 
-    abort(reason, abortedAt) {
+    transitToEndedWithReasonAborted(reason, abortedAt) {
+        if (!this._ended) {
+            this._ended = abortedAt;
+        }
         this._state = CALL_STATE.ENDED;
         this._endedReason = reason;
-        this._ended = abortedAt;
         return this;
     }
 
-    proceed(proceededAt) {
+    transitToProceeded(proceededAt) {
+        if (!this._proceeded) {
+            this._proceeded = proceededAt;
+        }
         this._state = CALL_STATE.PROCEEDED;
-        this._proceeded = proceededAt;
         return this;
     }
 
-    decline(declinedAt) {
+    transitToEndedWithReasonDeclined(declinedAt) {
+        if (!this._ended) {
+            this._ended = declinedAt;
+        }
         this._state = CALL_STATE.ENDED;
         this._endedReason = CALL_ENDED_REASON.DECLINED;
-        this._ended = declinedAt;
         return this;
     }
 
-    setLocalOffer(offer) {
-        this._localOffer = offer;
-    }
-
-    setRemoteOffer(offer) {
-        this._remoteOffer = offer;
-    }
-
-    offer(offeredAt) {
+    transitToOfferingWithReasonHaveOffer(offeredAt) {
+        if (!this._offering) {
+            this._offering = offeredAt;
+        }
         this._state = CALL_STATE.OFFERING;
         this._offering = offeredAt;
         this._offeringState = CALL_OFFERING_STATE.HAVE_OFFER;
+        return this;
+    }
+
+    transitToOfferingWithReasonHaveAnswer(offeredAt) {
+        if (!this._offering) {
+            this._offering = offeredAt;
+        }
+        this._state = CALL_STATE.OFFERING;
+        this._offeringState = CALL_OFFERING_STATE.HAVE_ANSWER;
+        return this;
+    }
+
+    transitToOfferingWithReasonHaveBoth(offeredAt) {
+        if (!this._offering) {
+            this._offering = offeredAt;
+        }
+        this._state = CALL_STATE.OFFERING;
+        this._offeringState = CALL_OFFERING_STATE.HAVE_BOTH;
+        return this;
+    }
+
+    transitToActiveWithReasonLocal(activedAt) {
+        if (!this._active) {
+            this._active = activedAt;
+        }
+        this._state = CALL_STATE.ACTIVE;
+        this._activeState = CALL_ACTIVE_STATE.IS_ACTIVE_LOCAL;
+        return this;
+    }
+
+    transitToActiveWithReasonRemote(activedAt) {
+        if (!this._active) {
+            this._active = activedAt;
+        }
+        this._state = CALL_STATE.ACTIVE;
+        this._activeState = CALL_ACTIVE_STATE.IS_ACTIVE_REMOTE;
+        return this;
+    }
+
+    transitToActiveWithReasonBothSide(activedAt) {
+        if (!this._active) {
+            this._active = activedAt;
+        }
+        this._state = CALL_STATE.ACTIVE;
+        this._activeState = CALL_ACTIVE_STATE.IS_ACTIVE_BOTH_SIDE;
+        return this;
+    }
+
+    transitToActive(activedAt, isLocal) {
+        if (!this._active) {
+            this._active = activedAt;
+        }
+
+        this._state = CALL_STATE.ACTIVE;
+        if (
+            this._activeState !== CALL_ACTIVE_STATE.IS_ACTIVE_LOCAL &&
+            this._activeState !== CALL_ACTIVE_STATE.IS_ACTIVE_REMOTE
+        ) {
+            if (isLocal) {
+                this._activeState = CALL_ACTIVE_STATE.IS_ACTIVE_LOCAL;
+            } else {
+                this._activeState = CALL_ACTIVE_STATE.IS_ACTIVE_REMOTE;
+            }
+        } else {
+            this._activeState = CALL_ACTIVE_STATE.IS_ACTIVE_BOTH_SIDE;
+        }
+
         return this;
     }
 
@@ -367,26 +440,12 @@ export default class Call {
         return this;
     }
 
-    active(activedAt, isLocal) {
-        if (!this._active) {
-            this._active = activedAt;
-        }
+    setLocalOffer(offer) {
+        this._localOffer = offer;
+    }
 
-        this._state = CALL_STATE.ACTIVE;
-        if (
-            this._activeState !== CALL_ACTIVE_STATE.IS_ACTIVE_LOCAL &&
-            this._activeState !== CALL_ACTIVE_STATE.IS_ACTIVE_REMOTE
-        ) {
-            if (isLocal) {
-                this._activeState = CALL_ACTIVE_STATE.IS_ACTIVE_LOCAL;
-            } else {
-                this._activeState = CALL_ACTIVE_STATE.IS_ACTIVE_REMOTE;
-            }
-        } else {
-            this._activeState = CALL_ACTIVE_STATE.IS_ACTIVE_BOTH_SIDE;
-        }
-
-        return this;
+    setRemoteOffer(offer) {
+        this._remoteOffer = offer;
     }
 
     getDescriptionFromAction(action) {

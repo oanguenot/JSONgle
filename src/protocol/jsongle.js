@@ -11,6 +11,23 @@ export const JSONGLE_ACTIONS = {
     NOOP: "noop",
 };
 
+export const STATE_ACTIONS = {
+    TRY: "try",
+    PROPOSE: "propose",
+    RING: "ring",
+    DECLINE: "decline",
+    PROCEED: "proceed",
+    RETRACT: "retract",
+    UNREACH: "unreach",
+    INITIATE: "initiate",
+    TRANSPORT: "transport",
+    ACCEPT: "accept",
+    ACTIVATE: "activate",
+    CANCEL: "cancel",
+    ABORTED: "aborted",
+    END: "end",
+};
+
 export const SESSION_INFO_REASON = {
     UNREACHABLE: "unreachable",
     TRYING: "trying",
@@ -54,6 +71,7 @@ export const CALL_ENDED_REASON = {
     RETRACTED: "retracted",
     TERMINATED: "terminated",
     DECLINED: "declined",
+    CANCELED: "canceled",
 };
 
 export const CALL_OFFERING_STATE = {
@@ -75,3 +93,19 @@ export const CALL_ESTABLISHING_STATE = {
     GOT_LOCAL_CANDIDATE: "got-local-candidate",
     GOT_REMOTE_CANDIDATE: "got-remote-candidate",
 };
+
+const stateMachine = {};
+stateMachine[CALL_STATE.NEW] = [STATE_ACTIONS.TRY, STATE_ACTIONS.PROPOSE, STATE_ACTIONS.UNREACH];
+stateMachine[CALL_STATE.TRYING] = [STATE_ACTIONS.RING, STATE_ACTIONS.RETRACT];
+stateMachine[CALL_STATE.RINGING] = [STATE_ACTIONS.DECLINE, STATE_ACTIONS.PROCEED, STATE_ACTIONS.RETRACT];
+stateMachine[CALL_STATE.PROCEEDED] = [STATE_ACTIONS.INITIATE, STATE_ACTIONS.CANCEL];
+stateMachine[CALL_STATE.OFFERING] = [
+    STATE_ACTIONS.ACCEPT,
+    STATE_ACTIONS.TRANSPORT,
+    STATE_ACTIONS.ACTIVATE,
+    STATE_ACTIONS.CANCEL,
+];
+stateMachine[CALL_STATE.ACTIVE] = [STATE_ACTIONS.CLEAR];
+stateMachine[CALL_STATE.ENDED] = [];
+
+export const STATES = stateMachine;
