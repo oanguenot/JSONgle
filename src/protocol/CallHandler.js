@@ -95,11 +95,15 @@ export default class CallHandler {
                 );
             };
 
+            routing[STATE_ACTIONS.ACTIVATE] = () => {
+                this.active(false, new Date(msg.jsongle.description.actived));
+            };
+
             routing[STATE_ACTIONS.CANCEL] = () => {
                 this.retractOrTerminate(false, new Date(message.jsongle.description.ended));
             };
 
-            routing[STATE_ACTIONS.CLEAR] = () => {
+            routing[STATE_ACTIONS.END] = () => {
                 this.retractOrTerminate(false, new Date(message.jsongle.description.ended));
             };
 
