@@ -67,7 +67,7 @@ export const CALL_MEDIA = {
 
 export const CALL_ENDED_REASON = {
     EMPTY: "",
-    CLEAR: "clear",
+    SUCCESS: "success",
     RETRACTED: "retracted",
     TERMINATED: "terminated",
     DECLINED: "declined",
@@ -109,3 +109,47 @@ stateMachine[CALL_STATE.ACTIVE] = [STATE_ACTIONS.CLEAR];
 stateMachine[CALL_STATE.ENDED] = [];
 
 export const STATES = stateMachine;
+
+export const getCallStateActionFromSignalingAction = (signalingAction, reason) => {
+    switch (signalingAction) {
+        case JSONGLE_ACTIONS.PROPOSE:
+            return STATE_ACTIONS.PROPOSE;
+        case JSONGLE_ACTIONS.INFO:
+            switch (reason) {
+                case SESSION_INFO_REASON.TRYING:
+                    return STATE_ACTIONS.TRY;
+                case SESSION_INFO_REASON.RINGING:
+                    return STATE_ACTIONS.RING;
+                case SESSION_INFO_REASON.UNREACHABLE:
+                    return STATE_ACTIONS.UNREACH;
+                case SESSION_INFO_REASON.ACTIVE:
+                    return STATE_ACTIONS.ACTIVATE;
+                default:
+                    return null;
+            }
+        case JSONGLE_ACTIONS.RETRACT:
+            return STATE_ACTIONS.RETRACT;
+        case JSONGLE_ACTIONS.DECLINE:
+            return STATE_ACTIONS.DECLINE;
+        case JSONGLE_ACTIONS.PROCEED:
+            return STATE_ACTIONS.PROCEED;
+        case JSONGLE_ACTIONS.INITIATE:
+            return STATE_ACTIONS.INITIATE;
+        case JSONGLE_ACTIONS.ACCEPT:
+            return STATE_ACTIONS.ACCEPT;
+        case JSONGLE_ACTIONS.TRANSPORT:
+            return STATE_ACTIONS.TRANSPORT;
+        case JSONGLE_ACTIONS.TERMINATE:
+            switch (reason) {
+                case CALL_ENDED_REASON.SUCCESS:
+                case CALL_ENDED_REASON.EMPTY:
+                    return STATE_ACTIONS.END;
+                case CALL_ENDED_REASON.CANCELED:
+                    return STATE_ACTIONS.CANCEL;
+                default:
+                    return null;
+            }
+        default:
+            return null;
+    }
+};

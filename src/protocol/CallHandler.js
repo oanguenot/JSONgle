@@ -1,63 +1,12 @@
 import { debug, warn, error } from "../utils/log";
-import {
-    JSONGLE_ACTIONS,
-    SESSION_INFO_REASON,
-    CALL_DIRECTION,
-    CALL_STATE,
-    STATE_ACTIONS,
-    CALL_ENDED_REASON,
-    STATES,
-} from "./jsongle";
+import { CALL_DIRECTION, CALL_STATE, STATE_ACTIONS, STATES, getCallStateActionFromSignalingAction } from "./jsongle";
 import Transport from "../transport/Transport";
 import { CALL_ACTIONS } from "../data/CallsReducer";
 import Call from "./Call";
 
 const moduleName = "call-handler";
 
-const getActionFromJSONgleAction = (jsongleAction, reason) => {
-    switch (jsongleAction) {
-        case JSONGLE_ACTIONS.PROPOSE:
-            return STATE_ACTIONS.PROPOSE;
-        case JSONGLE_ACTIONS.INFO:
-            switch (reason) {
-                case SESSION_INFO_REASON.TRYING:
-                    return STATE_ACTIONS.TRY;
-                case SESSION_INFO_REASON.RINGING:
-                    return STATE_ACTIONS.RING;
-                case SESSION_INFO_REASON.UNREACHABLE:
-                    return STATE_ACTIONS.UNREACH;
-                case SESSION_INFO_REASON.ACTIVE:
-                    return STATE_ACTIONS.ACTIVATE;
-                default:
-                    return null;
-            }
-        case JSONGLE_ACTIONS.RETRACT:
-            return STATE_ACTIONS.RETRACT;
-        case JSONGLE_ACTIONS.DECLINE:
-            return STATE_ACTIONS.DECLINE;
-        case JSONGLE_ACTIONS.PROCEED:
-            return STATE_ACTIONS.PROCEED;
-        case JSONGLE_ACTIONS.INITIATE:
-            return STATE_ACTIONS.INITIATE;
-        case JSONGLE_ACTIONS.ACCEPT:
-            return STATE_ACTIONS.ACCEPT;
-        case JSONGLE_ACTIONS.TRANSPORT:
-            return STATE_ACTIONS.TRANSPORT;
-        case JSONGLE_ACTIONS.TERMINATE:
-            switch (reason) {
-                case CALL_ENDED_REASON.CLEAR:
-                    return STATE_ACTIONS.END;
-                case CALL_ENDED_REASON.CANCELED:
-                    return STATE_ACTIONS.CANCEL;
-                default:
-                    return null;
-            }
-        default:
-            return null;
-    }
-};
-
-const isActionValid = (action, state) => {
+const isStateActionValidInState = (action, state) => {
     const currentState = state || CALL_STATE.NEW;
 
     // Return false if current state is not handled
@@ -171,11 +120,12 @@ export default class CallHandler {
         const { action, reason } = message.jsongle;
 
         debug(moduleName, `handle action '${action}'`);
-        const stateAction = getActionFromJSONgleAction(action, reason);
+        const stateAction = getCallStateActionFromSignalingAction(action, reason);
         debug(moduleName, `deduced state action is '${stateAction}'`);
         const currentState = this._currentCall ? this._currentCall.state : CALL_STATE.NEW;
         debug(moduleName, `current state is '${currentState}'`);
-        const isStateActionValid = isActionValid(stateAction, currentState);
+
+        const isStateActionValid = isStateActionValidInState(stateAction, currentState);
 
         if (!isStateActionValid) {
             warn(moduleName, `'${stateAction}' is not valid - don't execute transition`);
