@@ -121,7 +121,7 @@ jsongle.call(id, JSONGle.MEDIA.AUDIO);
 When call is ringing (`state` === `ringing`) and initiated from someone else (`direction` === `JSONgle.DIRECTION.INCOMING`), you have the possibility to decline it.
 
 ```js
-jsongle.oncallended = (call) => {
+jsongle.oncallended = (hasBeenInitiated) => {
     // Do something when the call has been ended
 };
 
@@ -225,7 +225,7 @@ At anytime, an initiated call can be ended by the issuer or the responder. When 
 From the application point of view, only one method is provided that retracts or ends the call depending on its internal state.
 
 ```js
-jsongle.oncallended = (call) => {
+jsongle.oncallended = (hasBeenInitiated) => {
     // Do something when the call has been ended
 };
 
@@ -254,7 +254,7 @@ You can subscribe to the following events on the **JSONgle** instance
 | :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `oncall`              | Fired when a new call has been received or when a call is initiated.<br>The event contains the `Call`                                                                                                                                       |
 | `oncallstatechanged`  | Fired each time there is an update on the current call.<br>The event contains the `Call`                                                                                                                                                    |
-| `oncallended`         | Fired when a call has ended.<br>The event contains the `Call`                                                                                                                                                                               |
+| `oncallended`         | Fired when a call has ended.<br>The event contains a boolean indicating if the call has been ended locally (`true`) or from the remote peer (`false`)                                                                                       |
 | `onofferneeded`       | Fired when a call needs a SDP offer.<br>The event contains the `Call`<br>The application should get the local description (SDP) and answer as soon as possible by calling the method `sendOffer` with the offer generated from the browser. |
 | `onofferreceived`     | Fired when a call received a SDP offer.<br>The event contains the `RTCSessionDescription` received from the recipient.<br>The application should give that offer to the `RTCPeerConnection`.                                                |
 | `oncandidatereceived` | Fired when a call received an ICE candidate.<br>The event contains the `RTCIceCandidate` received from the recipient.<br>The application should give that candidate to the `RTCPeerConnection`.                                             |

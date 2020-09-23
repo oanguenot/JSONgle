@@ -220,7 +220,7 @@ export default class CallHandler {
         }
 
         this.fireOnCallStateChanged();
-        this.fireOnCallEnded();
+        this.fireOnCallEnded(shouldSendMessage);
         this.fireOnTicket();
 
         if (shouldSendMessage) {
@@ -371,9 +371,9 @@ export default class CallHandler {
         }
     }
 
-    fireOnCallEnded() {
+    fireOnCallEnded(isLocal) {
         if (this._callbacks.oncallended) {
-            this._callbacks.oncallended(this._currentCall);
+            this._callbacks.oncallended(isLocal);
         }
     }
 
