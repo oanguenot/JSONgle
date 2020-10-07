@@ -284,7 +284,6 @@ export default class CallHandler {
             this._transport.sendMessage(offerMsg);
         } else {
             this.fireOnOfferReceived(offer);
-            this.fireOnOfferNeeded();
         }
     }
 
@@ -385,7 +384,7 @@ export default class CallHandler {
 
     fireOnOfferReceived(offer) {
         if (this._callbacks.onofferreceived) {
-            this._callbacks.onofferreceived(offer);
+            this._callbacks.onofferreceived(this._currentCall, offer, offer.type === "offer");
         }
     }
 
