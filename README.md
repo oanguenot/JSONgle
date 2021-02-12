@@ -22,6 +22,21 @@ Additionnaly to that, **JSONgle** computes internally a **Call State** machine t
 
 Don't forget to install and use [**WebRTC adapter**](https://github.com/webrtcHacks/adapter) in order to help you managing WebRTC on different browsers (JavaScript API).
 
+
+## Install
+
+Using NPM
+
+```bash
+$ npm install jsongle
+```
+
+Using Yarn
+
+```bash
+$ yarn add jsongle
+```
+
 ## Configuration
 
 In order to adapt **JSONgle** to your own server, you need to do some configuration.
@@ -85,6 +100,8 @@ _Note_: This `id` is used by JSONgle when generating messages. All messages will
 Once the configurations are ok, you can initialize **JSONgle**
 
 ```js
+import JSONGle from "jsongle";
+
 const jsongle = new JSONGle({
     transport: transportCfg,
     peer: peerCfg,
