@@ -1,12 +1,12 @@
 {
     "name": "jsongle",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "description": "JavaScript library for handling WebRTC signaling protocol based on JSON and Jingle",
     "main": "dist/JSONgle.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "prebuild": "rimraf dist",
-        "build:dev": "webpack --output-filename JSONgle.js",
+        "build:dev": "webpack -w --output-filename JSONgle.js",
         "build:prod": "webpack --output-filename JSONgle.js -p"
     },
     "files": [
@@ -35,6 +35,7 @@
         ]
     },
     "dependencies": {
+        "eslint-webpack-plugin": "2.5.3",
         "loglevel": "1.6.8",
         "uuid": "8.3.0"
     }

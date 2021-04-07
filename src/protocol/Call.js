@@ -505,7 +505,7 @@ export default class Call {
             this._state,
             this._endedReason,
             this._offeringState,
-            this._establishingState
+            this._establishingState,
         );
         const reason = getReasonFromActionAndState(action, this._state);
         const description = this.getDescriptionFromAction(action);
@@ -577,7 +577,6 @@ export default class Call {
         cloned.remoteOffer = this._remoteOffer;
         cloned.candidates = this._candidates;
         cloned.remoteCandidates = this._remoteCandidates;
-
         return cloned;
     }
 }

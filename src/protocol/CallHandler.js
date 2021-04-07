@@ -1,5 +1,11 @@
 import { debug, warn, error } from "../utils/log";
-import { CALL_DIRECTION, CALL_STATE, STATE_ACTIONS, STATES, getCallStateActionFromSignalingAction } from "./jsongle";
+import {
+    CALL_DIRECTION,
+    CALL_STATE,
+    STATE_ACTIONS,
+    STATES,
+    getCallStateActionFromSignalingAction,
+} from "./jsongle";
 import Transport from "../transport/Transport";
 import { CALL_ACTIONS } from "../data/CallsReducer";
 import Call from "./Call";
@@ -46,14 +52,7 @@ export default class CallHandler {
         const route = (action, msg) => {
             const routing = {};
             routing[STATE_ACTIONS.PROPOSE] = () => {
-                this._currentCall = new Call(
-                    msg.from,
-                    msg.to,
-                    msg.jsongle.description.media,
-                    CALL_DIRECTION.INCOMING,
-                    msg.jsongle.sid,
-                    new Date(msg.jsongle.description.initiated)
-                );
+                this._currentCall = new Call(msg.from, msg.to, msg.jsongle.description.media, CALL_DIRECTION.INCOMING, msg.jsongle.sid, new Date(msg.jsongle.description.initiated));
                 this.ringing(true, new Date());
             };
             routing[STATE_ACTIONS.TRY] = () => {
@@ -88,11 +87,7 @@ export default class CallHandler {
             };
 
             routing[STATE_ACTIONS.TRANSPORT] = () => {
-                this.offerCandidate(
-                    false,
-                    msg.jsongle.description.candidate,
-                    new Date(msg.jsongle.description.establishing)
-                );
+                this.offerCandidate(false, msg.jsongle.description.candidate, new Date(msg.jsongle.description.establishing));
             };
 
             routing[STATE_ACTIONS.ACTIVATE] = () => {
