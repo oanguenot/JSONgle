@@ -140,6 +140,36 @@ export default class JSONgle {
     }
 
     /**
+     * Mute the audio leg of a call
+     * Use to inform the other party that the audio media is not sent anymore
+     */
+    mute() {
+        if (!this.currentCall) {
+            throw Error("Can't mute the call - not in a call");
+        }
+        if (this.currentCall.muted) {
+            throw Error("Can't mute the call - call is already muted");
+        }
+
+        this._callHandler.mute(true, new Date());
+    }
+
+    /**
+     * Unmute the audio leg of a call
+     * Use to inform the other party that the audio media is sent again
+     */
+    unmute() {
+        if (!this.currentCall) {
+            throw Error("Can't unmute the call - not in a call");
+        }
+        if (!this.currentCall.muted) {
+            throw Error("Can't unmute the call - call is not muted");
+        }
+
+        this._callHandler.unmute(true, new Date());
+    }
+
+    /**
      * Send an offer to recipient
      * @param {*} offer The Offer to send
      */
@@ -241,6 +271,38 @@ export default class JSONgle {
      */
     set onticket(callback) {
         this._callHandler.registerCallback("onticket", callback);
+    }
+
+    /**
+     * Register to event 'oncallmuted'
+     * Fired when the call is muted on the remote side
+     */
+     set oncallmuted(callback) {
+        this._callHandler.registerCallback("oncallmuted", callback);
+    }
+
+    /**
+     * Register to event 'oncallunmuted'
+     * Fired when the call is unmuted on the remote side
+     */
+     set oncallunmuted(callback) {
+        this._callHandler.registerCallback("oncallunmuted", callback);
+    }
+
+    /**
+     * Register to event 'onlocalcallmuted'
+     * Fired when the call is muted on the local side
+     */
+     set onlocalcallmuted(callback) {
+        this._callHandler.registerCallback("onlocalcallmuted", callback);
+    }
+
+    /**
+     * Register to event 'onlocalcallunmuted'
+     * Fired when the call is unmuted on the local side
+     */
+     set onlocalcallunmuted(callback) {
+        this._callHandler.registerCallback("onlocalcallunmuted", callback);
     }
 
     /**

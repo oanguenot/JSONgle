@@ -5,6 +5,7 @@ import {
     STATE_ACTIONS,
     STATES,
     getCallStateActionFromSignalingAction,
+    SESSION_INFO_REASON,
 } from "./jsongle";
 import Transport from "../transport/Transport";
 import { CALL_ACTIONS } from "../data/CallsReducer";
@@ -44,6 +45,10 @@ export default class CallHandler {
             onofferneeded: null,
             onofferreceived: null,
             oncandidatereceived: null,
+            oncallmuted: null,
+            oncallunmuted: null,
+            onlocalcallmuted: null,
+            onlocalcallunmuted: null,
             onticket: null,
         };
     }
@@ -100,6 +105,14 @@ export default class CallHandler {
 
             routing[STATE_ACTIONS.END] = () => {
                 this.retractOrTerminate(false, new Date(message.jsongle.description.ended));
+            };
+
+            routing[STATE_ACTIONS.MUTE] = () => {
+                this.mute(false, new Date(message.jsongle.description.muted));
+            };
+
+            routing[STATE_ACTIONS.UNMUTE] = () => {
+                this.unmute(false, new Date(message.jsongle.description.unmuted));
             };
 
             if (!(action in routing)) {
@@ -192,13 +205,13 @@ export default class CallHandler {
     }
 
     retractOrTerminate(shouldSendMessage = true, ended) {
-        if (!this._currentCall.isInProgress && !this._currentCall.isActive) {
+        if (!this._currentCall.inprogress && !this._currentCall.active) {
             warn(moduleName, `call with sid '${this._currentCall.id}' is not in progress or active`);
             this.abort("incorrect-state");
             return;
         }
 
-        if (this._currentCall.isInProgress) {
+        if (this._currentCall.inprogress) {
             if (shouldSendMessage) {
                 debug(moduleName, `retract call '${this._currentCall.id}'`);
             } else {
@@ -340,6 +353,44 @@ export default class CallHandler {
         }
     }
 
+    mute(shouldSendMessage, mutedAt) {
+        if (shouldSendMessage) {
+            debug(moduleName, `send muted for call '${this._currentCall.id}'`);
+        } else {
+            debug(moduleName, `received muted for call '${this._currentCall.id}'`);
+        }
+
+        this.currentCall.transitToMuted(mutedAt, shouldSendMessage);
+        this.fireOnCallStateChanged();
+
+        if (shouldSendMessage) {
+            const mutedMsg = this._currentCall.jsongleze(SESSION_INFO_REASON.MUTE);
+            this._transport.sendMessage(mutedMsg);
+            this.fireOnCallLocalMuted();
+        } else {
+            this.fireOnCallMuted();
+        }
+    }
+
+    unmute(shouldSendMessage, unmutedAt) {
+        if (shouldSendMessage) {
+            debug(moduleName, `send unmuted for call '${this._currentCall.id}'`);
+        } else {
+            debug(moduleName, `received unmuted for call '${this._currentCall.id}'`);
+        }
+
+        this.currentCall.transitToUnmuted(unmutedAt, shouldSendMessage);
+        this.fireOnCallStateChanged();
+
+        if (shouldSendMessage) {
+            const unmutedMsg = this._currentCall.jsongleze(SESSION_INFO_REASON.UNMUTE);
+            this._transport.sendMessage(unmutedMsg);
+            this.fireOnCallLocalUnmuted();
+        } else {
+            this.fireOnCallUnmuted();
+        }
+    }
+
     noop() {
         debug(moduleName, "do nothing - strange!");
     }
@@ -393,6 +444,30 @@ export default class CallHandler {
         if (this._callbacks.onticket) {
             const ticket = this._currentCall.ticketize();
             this._callbacks.onticket(ticket);
+        }
+    }
+
+    fireOnCallLocalMuted() {
+        if (this._callbacks.onlocalcallmuted) {
+            this._callbacks.onlocalcallmuted(this._currentCall);
+        }
+    }
+
+    fireOnCallLocalUnmuted() {
+        if (this._callbacks.onlocalcallunmuted) {
+            this._callbacks.onlocalcallunmuted(this._currentCall);
+        }
+    }
+
+    fireOnCallMuted() {
+        if (this._callbacks.oncallmuted) {
+            this._callbacks.oncallmuted(this._currentCall);
+        }
+    }
+
+    fireOnCallUnmuted() {
+        if (this._callbacks.oncallunmuted) {
+            this._callbacks.oncallunmuted(this._currentCall);
         }
     }
 

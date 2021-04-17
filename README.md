@@ -6,21 +6,23 @@ WebRTC **JSONgle** is a JavaScript library that proposes an agnostic transport i
 
 Goal is that an application can use its existing server to exchange the signaling messages between peers but relies on **JSONgle** for the content of these messages.
 
-The exemple provided here is using **Socket.io** as the transport layer. But an abstraction is done to map your existing transport layer to **JSONgle**.
+The example provided here is using **Socket.io** as the transport layer. But an abstraction is done to map your existing transport layer to **JSONgle**.
 
 ## Signaling and WebRTC
 
-WebRTC needs a signaling way to negotiate with the remote peer about the media and the best path to follow.
+WebRTC needs a signaling server to negotiate with the remote peer about the media and the best path to follow.
 
 In fact, only few information need to be exchanged: a **SDP** and some **ICE Candidates**.
 
-So what **JSONgle** does is to ask for a local SDP in one side and its associated candidates and send them to the remote peer and by asking to that remote peer in a same maner his local description and some candidates that are given back to the initial sender. And that all!
+So what **JSONgle** does is to ask for a local SDP in one side and its associated candidates and send them to the remote peer. Then by asking to that remote peer in a same manner his local description and some candidates that are given back to the initial sender. And that all for initializing the call.
 
-Additionnaly to that, **JSONgle** computes internally a **Call State** machine that can be retrieved throught some events and generate at the end of the communication a **log ticket** that summarizes the call progress and information.
+Additionally to that, **JSONgle** can transmit information and actions done on the call such as when muting or unmuting the media.
+
+Finally, **JSONgle** computes internally a **Call State** machine that can be retrieved through some events and generates at the end of the communication a **log ticket** that summarizes the call progress and information.
 
 ## WebRTC Adapter
 
-Don't forget to install and use [**WebRTC adapter**](https://github.com/webrtcHacks/adapter) in order to help you managing WebRTC on different browsers (JavaScript API).
+Don't forget to install and use [**WebRTC adapter**](https://github.com/webrtcHacks/adapter) in order to help on the managment of WebRTC on different browsers (JavaScript API).
 
 
 ## Install
@@ -39,11 +41,11 @@ $ yarn add jsongle
 
 ## Configuration
 
-In order to adapt **JSONgle** to your own server, you need to do some configuration.
+**JSONgle** needs to be adapted to the server in use. This step is done by configuring the transport wrapper and the user identity.
 
-### Defining the transport layer
+### Defining the transport wrapper
 
-The first thing you have to do is to define your transport wrapper by using the following pattern:
+Define the transport wrapper using the following pattern:
 
 ```js
 const transportWrapper = (transport) => {
@@ -60,13 +62,13 @@ const transportWrapper = (transport) => {
 };
 ```
 
-The transport wrapper is in fact a function that embeds your own transport (here socket.io) and that returns an object with 2 properties `in` and `out`:
+The transport wrapper is in fact a function that embeds the transport used (here socket.io) and that returns an object with 2 properties `in` and `out`:
 
 -   **in**: This property which is a function is used when receiving a message from your transport layer to give it back to **JSONgle** when it should be. Here, we listen to the event name `jsongle` and we execute the callback given with the message received.
 
--   **out**: This property which is a function too is used when **JSONgle** needs to send a message using your transport layer. This function is called by **JSONgle** with the message to send as an argument. Just taken the message and send it using your transport layer.
+-   **out**: This property which is a function too is used when **JSONgle** needs to send a message using your transport layer. This function is called by **JSONgle** with the message to send as an argument. Just take the message and send it using your transport layer.
 
-In that previous sample, the `transport` parameter is in fact an instance of **Socket.IO**. `transport.on` and `transport.emit` are function from **Socket.IO**.
+In that previous sample, the `transport` parameter is in fact an instance of **Socket.IO**. `transport.on` and `transport.emit` are functions offered by **Socket.IO**.
 
 _Note_: If your transport layer allows to use custom event name, it is better to send all the **JSONgle** messages in a separate queue to avoid mixing them with your own events.
 
@@ -97,7 +99,7 @@ _Note_: This `id` is used by JSONgle when generating messages. All messages will
 
 ### Initialize JSONgle
 
-Once the configurations are ok, you can initialize **JSONgle**
+Once the configurations are ok, initialize **JSONgle**
 
 ```js
 import JSONGle from "jsongle";
@@ -127,7 +129,7 @@ jsongle.call(id, JSONGle.MEDIA.AUDIO);
 
 The mandatory parameter is the identifier of the recipient. Depending on how your server dispatch the message it can be the user id or any information that allows to contact the right recipient. This information will be used to fill the field `to` in the message sent. The `from` will contain your id as defined in the user identity paragraph.
 
-The method accepts a second optional parameter which is the media used. This is used to alert the recipient about the kind of call you want to initiate. If not provided, the default media used is `MEDIA.AUDIO`.
+The method accepts a second optional parameter which is the media used. This is used to alert the recipient about the kind of call you want to initiate. If not provided, the default media used is `MEDIA.AUDIO`. There is no check with the media used in the call.
 
 ```js
 jsongle.call(id, JSONGle.MEDIA.AUDIO);
@@ -223,7 +225,7 @@ jsongle.oncandidatereceived = async (candidate) => {
 
 ### Set call as active
 
-In order to inform the recipient that everything is ok on your side, you have to send a `session-info` message with a `reason=active`. This can be done by calling the method `setAsActive()` when the WebRTC call is established.
+In order to inform the recipient that everything is ok on your side, send a `session-info` message with a `reason=active`. This can be done by calling the method `setAsActive()` when the WebRTC call is established.
 
 ```js
 pc.onconnectionstatechange = () => {
@@ -234,6 +236,42 @@ pc.onconnectionstatechange = () => {
 ```
 
 In the same way, your application will receive a `session-info` with a `reason=active` from your recipient. This will trigger the event `oncallstatechanged`.
+
+### Mute and unmute
+
+When the application mute or unmute the media, a `session-info`message with a `reason=mute` or `reason=unmute` can be sent to your recipient in order to inform him of the nature of the change.
+
+```js
+// When muting the audio stream
+jsongle.mute()
+
+// When unmuting the audio stream
+jsongle.unmute()
+
+json.onlocalcallmuted = (call) => {
+    // Do something when the local stream is muted
+    ...
+}
+
+json.onlocalcallunmuted = (call) => {
+    // Do something when the local stream is unmuted
+    ...
+}
+```
+
+The recipient will receive an event in the same way to be informed
+
+```js
+json.oncallmuted = (call) => {
+    // Do something when the remote stream is muted
+    ...
+}
+
+json.oncallunmuted = (call) => {
+    // Do something when the remote stream is unmuted
+    ...
+}
+```
 
 ### End
 
@@ -276,8 +314,12 @@ You can subscribe to the following events on the **JSONgle** instance
 | `onofferreceived`     | Fired when a call received a SDP offer.<br>The event contains the `RTCSessionDescription` received from the recipient.<br>The application should give that offer to the `RTCPeerConnection`.                                                |
 | `oncandidatereceived` | Fired when a call received an ICE candidate.<br>The event contains the `RTCIceCandidate` received from the recipient.<br>The application should give that candidate to the `RTCPeerConnection`.                                             |
 | `onticket`            | Fired when the call has ended.<br>The event contains a sum-up of all call information.                                                                                                                                                      |
+| `oncallmuted`            | Fired when the remote peer has muted the stream on his side.<br>The event contains the `Call` | 
+| `oncallunmuted`            | Fired when the remote peer has unmuted the stream on his side.<br>The event contains the `Call` |
+| `onlocalcallmuted`            | Fired when the local stream has been muted.<br>The event contains the `Call` | 
+| `onlocalcallunmuted`            | Fired when the local stream has been muted.<br>The event contains the `Call` |
 
-Here is an exemple of registering to an event
+Here is an example of registering to an event
 
 ```js
 jsongle.oncallstatechanged = (call) => {
@@ -389,6 +431,27 @@ On the callee side, the `Call` has the following cycle:
 `ringing` -> `proceeded` -> `offering` -> `active` -> `releasing` -> `ended`
 
 _Note_: From any state, the `Call` state can move to `ended`.
+
+### Call API
+
+The `Call` object has the following properties
+
+```js
+{
+    id, // the identifier of the call
+    state,  // the current state
+    caller, // the identifier of the caller
+    callee, // the identifier of the callee
+    media, // the media used (audio or video)
+    active, // true if the call is active
+    muted, // true if the call is muted locally,
+    remoteIsMuted, // true if the call is muted at the remote side
+    inProgress, // true if the call is in progress (not yet active)
+    ended,  // true if the call has ended
+    outgoing,   // true if the call is an outgoing call
+}
+```
+
 
 ## Messages exchanged
 
@@ -642,6 +705,45 @@ The **session-info** message with a `reason=active` is sent by the issuer and th
         "initiator": "70001",
         "responder": "70002",
         "description": { "actived": "2020-09-14T19:26:31.560Z" }
+    }
+}
+```
+### session-info - muted
+
+The **session-info** message with a `reason=mute` is sent by the issuer when he mutes his stream.
+
+```json
+{
+    "id": "fdc216f8-3d73-4865-a3c7-b43e1f5338a3",
+    "from": "70002",
+    "to": "70001",
+    "jsongle": {
+        "sid": "678403f4-7b1f-4ea5-84cb-c6699a91db22",
+        "action": "session-info",
+        "reason": "mute",
+        "initiator": "70001",
+        "responder": "70002",
+        "description": { "muted": "2020-09-10T17:50:26.061Z" }
+    }
+}
+```
+
+### session-info - unmuted
+
+The **session-info** message with a `reason=unmute` is sent by the issuer when he unmutes his stream.
+
+```json
+{
+    "id": "fdc216f8-3d73-4865-a3c7-b43e1f5338a3",
+    "from": "70002",
+    "to": "70001",
+    "jsongle": {
+        "sid": "678403f4-7b1f-4ea5-84cb-c6699a91db22",
+        "action": "session-info",
+        "reason": "unmute",
+        "initiator": "70001",
+        "responder": "70002",
+        "description": { "unmuted": "2020-09-10T17:50:26.061Z" }
     }
 }
 ```

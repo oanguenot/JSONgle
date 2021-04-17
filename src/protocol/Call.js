@@ -7,6 +7,7 @@ import {
     CALL_OFFERING_STATE,
     CALL_ACTIVE_STATE,
     CALL_ESTABLISHING_STATE,
+    SESSION_INFO_REASON,
 } from "./jsongle";
 
 const getActionFromStateAndStep = (state, endedReason, offeringState, establishingState) => {
@@ -49,10 +50,10 @@ const getActionFromStateAndStep = (state, endedReason, offeringState, establishi
     }
 };
 
-const getReasonFromActionAndState = (action, state) => {
+const getReasonFromActionAndState = (action, state, inheritedAction) => {
     switch (action) {
         case JSONGLE_ACTIONS.INFO:
-            return state;
+            return inheritedAction || state;
         default:
             return CALL_STATE.NOOP;
     }
@@ -77,6 +78,10 @@ export default class Call {
         this._establishingState = CALL_ESTABLISHING_STATE.HAVE_NO_CANDIDATE;
         this._active = null;
         this._activeState = CALL_ACTIVE_STATE.IS_NOT_ACTIVE;
+        this._muted = null;
+        this._unmuted = null;
+        this._remoteMuted = null;
+        this._remoteUnmuted = null;
         this._ended = null;
         this._endedReason = CALL_ENDED_REASON.EMPTY;
         this._localOffer = null;
@@ -209,11 +214,51 @@ export default class Call {
         this._endedReason = value;
     }
 
-    get isActive() {
+    get active() {
         return this._state === CALL_STATE.ACTIVE;
     }
 
-    get isInProgress() {
+    get muted() {
+        return this._activeState === CALL_ACTIVE_STATE.IS_MUTED_LOCAL || this._activeState === CALL_ACTIVE_STATE.IS_MUTED_BOTH_SIDE;
+    }
+
+    get mutedAt() {
+        return this._muted;
+    }
+
+    set mutedAt(value) {
+        this._muted = value;
+    }
+
+    get unmutedAt() {
+        return this._unmuted;
+    }
+
+    set unmutedAt(value) {
+        this._unmuted = value;
+    }
+
+    get remoteIsMuted() {
+        return this._activeState === CALL_ACTIVE_STATE.IS_MUTED_REMOTE || this._activeState === CALL_ACTIVE_STATE.IS_MUTED_BOTH_SIDE;
+    }
+
+    get remoteMutedAt() {
+        return this._remoteMuted;
+    }
+
+    set remoteMutedAt(value) {
+        this._remoteMuted = value;
+    }
+
+    get remoteUnmutedAt() {
+        return this._remoteUnmuted;
+    }
+
+    set remoteUnmutedAt(value) {
+        this._remoteUnmuted = value;
+    }
+
+    get inProgress() {
         return (
             this._state === CALL_STATE.NEW ||
             this._state === CALL_STATE.TRYING ||
@@ -223,7 +268,7 @@ export default class Call {
         );
     }
 
-    get isEnded() {
+    get ended() {
         return this._state === CALL_STATE.ENDED;
     }
 
@@ -409,6 +454,30 @@ export default class Call {
         return this;
     }
 
+    transitToMuted(mutedAt, isLocal) {
+        if (isLocal) {
+            this._activeState = this._activeState === CALL_ACTIVE_STATE.IS_MUTED_REMOTE ? CALL_ACTIVE_STATE.IS_MUTED_BOTH_SIDE : CALL_ACTIVE_STATE.IS_MUTED_LOCAL;
+            this._muted = mutedAt;
+        } else {
+            this._activeState = this._activeState === CALL_ACTIVE_STATE.IS_MUTED_LOCAL ? CALL_ACTIVE_STATE.IS_MUTED_BOTH_SIDE : CALL_ACTIVE_STATE.IS_MUTED_REMOTE;
+            this._remoteMuted = mutedAt;
+        }
+
+        return this;
+    }
+
+    transitToUnmuted(unmutedAt, isLocal) {
+        if (isLocal) {
+            this._activeState = this._activeState === CALL_ACTIVE_STATE.IS_MUTED_BOTH_SIDE ? CALL_ACTIVE_STATE.IS_MUTED_REMOTE : CALL_ACTIVE_STATE.IS_ACTIVE_BOTH_SIDE;
+            this._unmuted = unmutedAt;
+        } else {
+            this._activeState = this._activeState === CALL_ACTIVE_STATE.IS_MUTED_BOTH_SIDE ? CALL_ACTIVE_STATE.IS_MUTED_LOCAL : CALL_ACTIVE_STATE.IS_ACTIVE_BOTH_SIDE;
+            this._remoteUnmuted = unmutedAt;
+        }
+
+        return this;
+    }
+
     answer(answeredAt) {
         this._offered = answeredAt;
         if (this._offeringState === CALL_OFFERING_STATE.HAVE_ANSWER) {
@@ -448,7 +517,7 @@ export default class Call {
         this._remoteOffer = offer;
     }
 
-    getDescriptionFromAction(action) {
+    getDescriptionFromAction(action, inheritedAction) {
         switch (action) {
             case JSONGLE_ACTIONS.PROPOSE:
                 return {
@@ -469,6 +538,16 @@ export default class Call {
                 }
 
                 if (this._state === CALL_STATE.ACTIVE) {
+                    if (inheritedAction === SESSION_INFO_REASON.MUTE) {
+                        return {
+                            muted: this._muted ? this._muted.toJSON() : null,
+                        };
+                    }
+                    if (inheritedAction === SESSION_INFO_REASON.UNMUTE) {
+                        return {
+                            unmuted: this._unmuted ? this._unmuted.toJSON() : null,
+                        };
+                    }
                     return {
                         actived: this._active ? this._active.toJSON() : null,
                     };
@@ -500,15 +579,15 @@ export default class Call {
         }
     }
 
-    jsongleze() {
+    jsongleze(inheritedAction = null) {
         const action = getActionFromStateAndStep(
             this._state,
             this._endedReason,
             this._offeringState,
             this._establishingState,
         );
-        const reason = getReasonFromActionAndState(action, this._state);
-        const description = this.getDescriptionFromAction(action);
+        const reason = getReasonFromActionAndState(action, this._state, inheritedAction);
+        const description = this.getDescriptionFromAction(action, inheritedAction);
 
         return {
             id: generateNewId(),
@@ -577,6 +656,10 @@ export default class Call {
         cloned.remoteOffer = this._remoteOffer;
         cloned.candidates = this._candidates;
         cloned.remoteCandidates = this._remoteCandidates;
+        cloned.mutedAt = this._muted;
+        cloned.unmutedAt = this._unmuted;
+        cloned.remoteMutedAt = this._remoteMuted;
+        cloned.remoteUnmutedAt = this._remoteUnmuted;
         return cloned;
     }
 }

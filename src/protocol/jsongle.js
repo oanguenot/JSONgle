@@ -26,6 +26,8 @@ export const STATE_ACTIONS = {
     CANCEL: "cancel",
     ABORTED: "aborted",
     END: "end",
+    MUTE: "mute",
+    UNMUTE: "unmute",
 };
 
 export const SESSION_INFO_REASON = {
@@ -36,6 +38,8 @@ export const SESSION_INFO_REASON = {
     DISCONNECTED: "disconnected",
     UNKNOWN_SESSION: "unknown-session",
     ACTIVE: "active",
+    MUTE: "mute",
+    UNMUTE: "unmute",
 };
 
 export const USER_ACTIVITY = {
@@ -86,6 +90,9 @@ export const CALL_ACTIVE_STATE = {
     IS_ACTIVE_LOCAL: "is-active-local",
     IS_ACTIVE_REMOTE: "is-active-remote",
     IS_ACTIVE_BOTH_SIDE: "is-active-both-side",
+    IS_MUTED_REMOTE: "is-muted-remote",
+    IS_MUTED_LOCAL: "is-muted-local",
+    IS_MUTED_BOTH_SIDE: "is-muted-both-side",
 };
 
 export const CALL_ESTABLISHING_STATE = {
@@ -105,7 +112,7 @@ stateMachine[CALL_STATE.OFFERING] = [
     STATE_ACTIONS.ACTIVATE,
     STATE_ACTIONS.CANCEL,
 ];
-stateMachine[CALL_STATE.ACTIVE] = [STATE_ACTIONS.END, STATE_ACTIONS.ACTIVATE];
+stateMachine[CALL_STATE.ACTIVE] = [STATE_ACTIONS.END, STATE_ACTIONS.ACTIVATE, STATE_ACTIONS.MUTE, STATE_ACTIONS.UNMUTE];
 stateMachine[CALL_STATE.ENDED] = [];
 
 export const STATES = stateMachine;
@@ -124,6 +131,10 @@ export const getCallStateActionFromSignalingAction = (signalingAction, reason) =
                     return STATE_ACTIONS.UNREACH;
                 case SESSION_INFO_REASON.ACTIVE:
                     return STATE_ACTIONS.ACTIVATE;
+                case SESSION_INFO_REASON.MUTE:
+                    return STATE_ACTIONS.MUTE;
+                case SESSION_INFO_REASON.UNMUTE:
+                    return STATE_ACTIONS.UNMUTE;
                 default:
                     return null;
             }
