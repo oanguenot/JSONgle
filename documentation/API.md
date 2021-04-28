@@ -5,7 +5,25 @@
 
 ## Properties
 
-### ticket
+The **JSONgle** object instance offers the following properties:
+
+### currentCall -> Call
+
+Get the current call or null
+
+### id
+
+Get the connected user id
+
+### name -> string
+
+The name of the library
+
+### version -> string
+
+The version of the library
+
+### ticket -> Object
 
 For each call done, a ticket is generated and can be retrieved through the getter `ticket` or by listening to the event `onticket`. The event is fired once the call has ended.
 
@@ -18,23 +36,9 @@ jsongle.onticket = (ticket) => {
 };
 ```
 
-### name -> string
-
-The name of the library
-
-### version -> string
-
-The version of the library
-
-### currentCall -> Call
-
-Get the current call or null
-
-### id
-
-Get the connected user id
-
 ## Methods
+
+The **JSONgle** object instance offers the following methods:
 
 ### call(string id, string type)
 
@@ -116,11 +120,9 @@ jsongle.onofferneeded = async (call) => {
 In the same way, when the remote recipient sends his SDP (his local description), **JSONGle** fires an event with that description in order for your application to give it to the WebRTC stack. Here is the minimum to do
 
 ```js
-
 jsongle.onofferreceived = (remoteDescription) {
     pc.setRemoteDescription(remoteDescription);
 }
-
 ```
 
 ### sendCandidate(object candidate)
@@ -211,4 +213,3 @@ jsongle.oncallended = (hasBeenInitiated) => {
 // End or retract a call
 jsongle.end();
 ```
-
