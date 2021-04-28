@@ -6,6 +6,7 @@ import {
     STATES,
     getCallStateActionFromSignalingAction,
     SESSION_INFO_REASON,
+    buildCustomMessage,
 } from "./jsongle";
 import Transport from "../transport/Transport";
 import { CALL_ACTIONS } from "../data/CallsReducer";
@@ -390,10 +391,11 @@ export default class CallHandler {
         }
     }
 
-    send(shouldSendMessage, msg) {
+    send(shouldSendMessage, msg, from, to, action) {
         if (shouldSendMessage) {
             debug(moduleName, "send custom msg");
-            this._transport.sendMessage(msg);
+            const jsongleMsg = buildCustomMessage(msg, from, to, action);
+            this._transport.sendMessage(jsongleMsg);
         } else {
             debug(moduleName, "received custom msg");
             this.fireOnDataMsgReceived(msg.jsongle);

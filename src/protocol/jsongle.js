@@ -1,3 +1,5 @@
+import { generateNewId } from "../utils/helper";
+
 export const JSONGLE_ACTIONS = {
     PROPOSE: "session-propose",
     INFO: "session-info",
@@ -9,6 +11,7 @@ export const JSONGLE_ACTIONS = {
     TERMINATE: "session-terminate",
     TRANSPORT: "transport-info",
     HELLO: "session-hello",
+    CUSTOM: "session-custom",
     NOOP: "noop",
 };
 
@@ -164,3 +167,15 @@ export const getCallStateActionFromSignalingAction = (signalingAction, reason) =
             return STATE_ACTIONS.NOOP;
     }
 };
+
+export const buildCustomMessage = (description, from, to, action) => (
+    {
+        id: generateNewId(),
+        from,
+        to,
+        jsongle: {
+            action,
+            description,
+        },
+    }
+);
