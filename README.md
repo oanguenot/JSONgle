@@ -113,10 +113,10 @@ const jsongle = new JSONGle({
 ## Usage
 
 More information about **JSONgle**:
-- [API](./doc/API.md)
-- [Events](./doc/Events.md)
-- [Call Object Model](./doc/Call-Object-Model.md)
-- [Messages](./doc/Messages.md)
+- [API](./documentation/API.md)
+- [Events](./documentation/Events.md)
+- [Call Object Model](./documentation/Call-Object-Model.md)
+- [Messages](./documentation/Messages.md)
 
 ## JSONgle-Server
 
