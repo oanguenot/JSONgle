@@ -312,3 +312,21 @@ The **session-terminate** message is sent by the issuer or the responder when th
     }
 }
 ```
+
+## session-custom
+
+The **session-custom** message is sent by the issuer or the responder when he want to exchange custom or arbitrary (JSON based) data. 
+
+```json
+{
+    "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
+    "from": "70001",
+    "to": "70002",
+    "jsongle": {
+        "action": "session-custom",
+        "description": { 
+          // custom part
+         }
+    }
+}
+```

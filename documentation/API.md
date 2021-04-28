@@ -40,7 +40,7 @@ jsongle.onticket = (ticket) => {
 
 The **JSONgle** object instance offers the following methods:
 
-### call(string id, string type)
+### call(string: id, string: type)
 
 This method calls a user.
 
@@ -213,3 +213,29 @@ jsongle.oncallended = (hasBeenInitiated) => {
 // End or retract a call
 jsongle.end();
 ```
+
+### send(object: description, string: to, optional(string): action)
+
+At anytime, a custom message can be exchanged to specific recipient (identified by his id), a room (identified by a roomid) or to the server directly (identified by the 'sn' property received in the **session-hello** event) by using the **send** method.
+
+**description** is an object that replaces the content of the `description` property in the JSONgle message.
+
+If no **action** is specified (can be anything), a default `session-custom` value is set.
+
+```js
+// Custom message
+const msg={
+  uid: 'eMVTtWVSL5pzJaDTAAAJ',
+  rid: 'room4'
+}
+
+jsongle.send(msg, 'user_4', 'session-custom');
+
+//On 'user_4'
+jsongle.ondatareceived = (content, from) => {
+  // Do something with the content received 
+  // content = { action: session-custom, description: { uid= 'eMVTtWVSL5pzJaDTAAAJ', rid:'room4' } }
+}
+````
+
+By listening to the event `ondatareceived`, the remote recipient is able to handle the content of that message.

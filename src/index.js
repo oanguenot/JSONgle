@@ -15,6 +15,7 @@ import {
     CALL_ACTIVE_STATE,
     CALL_ESTABLISHING_STATE,
     JSONGLE_ACTIONS,
+    buildCustomMessage,
 } from "./protocol/jsongle";
 
 const moduleName = "jsongle-indx";
@@ -222,8 +223,9 @@ export default class JSONgle {
      * Send a custom message
      * @param {Object} msg The message to send
      */
-    send(msg, recipient, type = JSONGLE_ACTIONS.CUSTOM) {
-        this._callHandler.send(true, msg, this._peerStore.getState().peer.id, recipient, type);
+    send(msg, to, action = JSONGLE_ACTIONS.CUSTOM) {
+        const jsongleMsg = buildCustomMessage(msg, this._peerStore.getState().peer.id, to, action);
+        this._callHandler.send(true, jsongleMsg);
     }
 
     /**

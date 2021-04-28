@@ -16,6 +16,7 @@
 | `oncallunmuted`            | Fired when the remote peer has unmuted the stream on his side.<br>The event contains the `Call` |
 | `onlocalcallmuted`            | Fired when the local stream has been muted.<br>The event contains the `Call` | 
 | `onlocalcallunmuted`            | Fired when the local stream has been muted.<br>The event contains the `Call` |
+| `ondatareceived`  | Fired when a custom message has been received.<br>The event contains an `Object` representing the content and a `string` representing the issuer |
 
 Here is an example of registering to an event
 
