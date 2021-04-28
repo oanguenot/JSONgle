@@ -8,6 +8,7 @@ export const JSONGLE_ACTIONS = {
     INITIATE: "session-initiate",
     TERMINATE: "session-terminate",
     TRANSPORT: "transport-info",
+    HELLO: "session-hello",
     NOOP: "noop",
 };
 
@@ -28,6 +29,8 @@ export const STATE_ACTIONS = {
     END: "end",
     MUTE: "mute",
     UNMUTE: "unmute",
+    SEND: "send",
+    NOOP: "noop",
 };
 
 export const SESSION_INFO_REASON = {
@@ -102,18 +105,13 @@ export const CALL_ESTABLISHING_STATE = {
 };
 
 const stateMachine = {};
-stateMachine[CALL_STATE.NEW] = [STATE_ACTIONS.TRY, STATE_ACTIONS.PROPOSE, STATE_ACTIONS.UNREACH];
-stateMachine[CALL_STATE.TRYING] = [STATE_ACTIONS.RING, STATE_ACTIONS.RETRACT];
-stateMachine[CALL_STATE.RINGING] = [STATE_ACTIONS.DECLINE, STATE_ACTIONS.PROCEED, STATE_ACTIONS.RETRACT];
-stateMachine[CALL_STATE.PROCEEDED] = [STATE_ACTIONS.INITIATE, STATE_ACTIONS.CANCEL];
-stateMachine[CALL_STATE.OFFERING] = [
-    STATE_ACTIONS.ACCEPT,
-    STATE_ACTIONS.TRANSPORT,
-    STATE_ACTIONS.ACTIVATE,
-    STATE_ACTIONS.CANCEL,
-];
-stateMachine[CALL_STATE.ACTIVE] = [STATE_ACTIONS.END, STATE_ACTIONS.ACTIVATE, STATE_ACTIONS.MUTE, STATE_ACTIONS.UNMUTE];
-stateMachine[CALL_STATE.ENDED] = [];
+stateMachine[CALL_STATE.NEW] = [STATE_ACTIONS.TRY, STATE_ACTIONS.PROPOSE, STATE_ACTIONS.UNREACH, STATE_ACTIONS.SEND];
+stateMachine[CALL_STATE.TRYING] = [STATE_ACTIONS.RING, STATE_ACTIONS.RETRACT, STATE_ACTIONS.SEND];
+stateMachine[CALL_STATE.RINGING] = [STATE_ACTIONS.DECLINE, STATE_ACTIONS.PROCEED, STATE_ACTIONS.RETRACT, STATE_ACTIONS.SEND];
+stateMachine[CALL_STATE.PROCEEDED] = [STATE_ACTIONS.INITIATE, STATE_ACTIONS.CANCEL, STATE_ACTIONS.SEND];
+stateMachine[CALL_STATE.OFFERING] = [STATE_ACTIONS.ACCEPT, STATE_ACTIONS.TRANSPORT, STATE_ACTIONS.ACTIVATE, STATE_ACTIONS.CANCEL, STATE_ACTIONS.SEND];
+stateMachine[CALL_STATE.ACTIVE] = [STATE_ACTIONS.END, STATE_ACTIONS.ACTIVATE, STATE_ACTIONS.MUTE, STATE_ACTIONS.UNMUTE, STATE_ACTIONS.SEND];
+stateMachine[CALL_STATE.ENDED] = [STATE_ACTIONS.SEND];
 
 export const STATES = stateMachine;
 
@@ -136,7 +134,7 @@ export const getCallStateActionFromSignalingAction = (signalingAction, reason) =
                 case SESSION_INFO_REASON.UNMUTE:
                     return STATE_ACTIONS.UNMUTE;
                 default:
-                    return null;
+                    return STATE_ACTIONS.NOOP;
             }
         case JSONGLE_ACTIONS.RETRACT:
             return STATE_ACTIONS.RETRACT;
@@ -158,9 +156,11 @@ export const getCallStateActionFromSignalingAction = (signalingAction, reason) =
                 case CALL_ENDED_REASON.CANCELED:
                     return STATE_ACTIONS.CANCEL;
                 default:
-                    return null;
+                    return STATE_ACTIONS.NOOP;
             }
+        case JSONGLE_ACTIONS.HELLO:
+            return STATE_ACTIONS.SEND;
         default:
-            return null;
+            return STATE_ACTIONS.NOOP;
     }
 };

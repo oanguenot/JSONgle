@@ -293,7 +293,7 @@ export default class JSONgle {
      * Register to event 'onlocalcallmuted'
      * Fired when the call is muted on the local side
      */
-     set onlocalcallmuted(callback) {
+    set onlocalcallmuted(callback) {
         this._callHandler.registerCallback("onlocalcallmuted", callback);
     }
 
@@ -301,8 +301,15 @@ export default class JSONgle {
      * Register to event 'onlocalcallunmuted'
      * Fired when the call is unmuted on the local side
      */
-     set onlocalcallunmuted(callback) {
+    set onlocalcallunmuted(callback) {
         this._callHandler.registerCallback("onlocalcallunmuted", callback);
+    }
+
+    /**
+     * Register to event 'ondatareceived
+     */
+    set ondatareceived(callback) {
+        this._callHandler.registerCallback("ondatareceived", callback);
     }
 
     /**

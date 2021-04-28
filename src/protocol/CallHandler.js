@@ -50,6 +50,7 @@ export default class CallHandler {
             onlocalcallmuted: null,
             onlocalcallunmuted: null,
             onticket: null,
+            ondatareceived: null,
         };
     }
 
@@ -115,12 +116,14 @@ export default class CallHandler {
                 this.unmute(false, new Date(message.jsongle.description.unmuted));
             };
 
+            routing[STATE_ACTIONS.SEND] = () => {
+                this.send(false, msg);
+            };
+
             if (!(action in routing)) {
                 warn(moduleName, `transition '${action}' is not yet implemented`);
                 return;
             }
-
-            debug(moduleName, `transit to action ${action}`);
             routing[action]();
         };
 
@@ -133,18 +136,14 @@ export default class CallHandler {
 
         debug(moduleName, `handle action '${action}'`);
         const stateAction = getCallStateActionFromSignalingAction(action, reason);
-        debug(moduleName, `deduced state action is '${stateAction}'`);
         const currentState = this._currentCall ? this._currentCall.state : CALL_STATE.NEW;
-        debug(moduleName, `current state is '${currentState}'`);
-
+        debug(moduleName, `try to execute '${stateAction}' in state '${currentState}'`);
         const isStateActionValid = isStateActionValidInState(stateAction, currentState);
 
         if (!isStateActionValid) {
             warn(moduleName, `'${stateAction}' is not valid - don't execute transition`);
             return;
         }
-
-        debug(moduleName, `'${stateAction}' is valid - execute transition`);
         route(stateAction, message);
     }
 
@@ -391,6 +390,16 @@ export default class CallHandler {
         }
     }
 
+    send(shouldSendMessage, msg) {
+        if (shouldSendMessage) {
+            debug(moduleName, "send custom msg");
+            this._transport.sendMessage(msg);
+        } else {
+            debug(moduleName, "received custom msg");
+            this.fireOnDataMsgReceived(msg.jsongle);
+        }
+    }
+
     noop() {
         debug(moduleName, "do nothing - strange!");
     }
@@ -468,6 +477,12 @@ export default class CallHandler {
     fireOnCallUnmuted() {
         if (this._callbacks.oncallunmuted) {
             this._callbacks.oncallunmuted(this._currentCall);
+        }
+    }
+
+    fireOnDataMsgReceived(msg) {
+        if (this._callbacks.ondatareceived) {
+            this._callbacks.ondatareceived(msg);
         }
     }
 
