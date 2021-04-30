@@ -10,8 +10,13 @@ export const JSONGLE_ACTIONS = {
     INITIATE: "session-initiate",
     TERMINATE: "session-terminate",
     TRANSPORT: "transport-info",
-    HELLO: "session-hello",
     CUSTOM: "session-custom",
+    IQ_SET: "iq-set",
+    IQ_GET: "iq-get",
+    IQ_RESULT: "iq-result",
+    IQ_ERROR: "iq-error",
+    ERROR: "session-error",
+    HELLO: "session-hello",
     NOOP: "noop",
 };
 
@@ -33,6 +38,8 @@ export const STATE_ACTIONS = {
     MUTE: "mute",
     UNMUTE: "unmute",
     SEND: "send",
+    IQ: "iq",
+    HELLO: "hello",
     NOOP: "noop",
 };
 
@@ -54,6 +61,7 @@ export const USER_ACTIVITY = {
 };
 
 export const CALL_STATE = {
+    FREE: "free",
     NEW: "new",
     TRYING: "trying",
     RINGING: "ringing",
@@ -108,12 +116,13 @@ export const CALL_ESTABLISHING_STATE = {
 };
 
 const stateMachine = {};
-stateMachine[CALL_STATE.NEW] = [STATE_ACTIONS.TRY, STATE_ACTIONS.PROPOSE, STATE_ACTIONS.UNREACH, STATE_ACTIONS.SEND];
-stateMachine[CALL_STATE.TRYING] = [STATE_ACTIONS.RING, STATE_ACTIONS.RETRACT, STATE_ACTIONS.SEND];
-stateMachine[CALL_STATE.RINGING] = [STATE_ACTIONS.DECLINE, STATE_ACTIONS.PROCEED, STATE_ACTIONS.RETRACT, STATE_ACTIONS.SEND];
-stateMachine[CALL_STATE.PROCEEDED] = [STATE_ACTIONS.INITIATE, STATE_ACTIONS.CANCEL, STATE_ACTIONS.SEND];
-stateMachine[CALL_STATE.OFFERING] = [STATE_ACTIONS.ACCEPT, STATE_ACTIONS.TRANSPORT, STATE_ACTIONS.ACTIVATE, STATE_ACTIONS.CANCEL, STATE_ACTIONS.SEND];
-stateMachine[CALL_STATE.ACTIVE] = [STATE_ACTIONS.END, STATE_ACTIONS.ACTIVATE, STATE_ACTIONS.MUTE, STATE_ACTIONS.UNMUTE, STATE_ACTIONS.SEND];
+stateMachine[CALL_STATE.FREE] = [STATE_ACTIONS.SEND, STATE_ACTIONS.IQ, STATE_ACTIONS.HELLO];
+stateMachine[CALL_STATE.NEW] = [STATE_ACTIONS.TRY, STATE_ACTIONS.PROPOSE, STATE_ACTIONS.UNREACH, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ];
+stateMachine[CALL_STATE.TRYING] = [STATE_ACTIONS.RING, STATE_ACTIONS.RETRACT, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ];
+stateMachine[CALL_STATE.RINGING] = [STATE_ACTIONS.DECLINE, STATE_ACTIONS.PROCEED, STATE_ACTIONS.RETRACT, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ];
+stateMachine[CALL_STATE.PROCEEDED] = [STATE_ACTIONS.INITIATE, STATE_ACTIONS.CANCEL, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ];
+stateMachine[CALL_STATE.OFFERING] = [STATE_ACTIONS.ACCEPT, STATE_ACTIONS.TRANSPORT, STATE_ACTIONS.ACTIVATE, STATE_ACTIONS.CANCEL, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ];
+stateMachine[CALL_STATE.ACTIVE] = [STATE_ACTIONS.END, STATE_ACTIONS.ACTIVATE, STATE_ACTIONS.MUTE, STATE_ACTIONS.UNMUTE, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ];
 stateMachine[CALL_STATE.ENDED] = [STATE_ACTIONS.SEND];
 
 export const STATES = stateMachine;
@@ -161,10 +170,17 @@ export const getCallStateActionFromSignalingAction = (signalingAction, reason) =
                 default:
                     return STATE_ACTIONS.NOOP;
             }
-        case JSONGLE_ACTIONS.HELLO:
+        case JSONGLE_ACTIONS.ERROR:
             return STATE_ACTIONS.SEND;
+        case JSONGLE_ACTIONS.HELLO:
+            return STATE_ACTIONS.HELLO;
+        case JSONGLE_ACTIONS.IQ_SET:
+        case JSONGLE_ACTIONS.IQ_RESULT:
+        case JSONGLE_ACTIONS.IQ_GET:
+        case JSONGLE_ACTIONS.IQ_ERROR:
+            return STATE_ACTIONS.IQ;
         default:
-            return STATE_ACTIONS.NOOP;
+            return STATE_ACTIONS.SEND;
     }
 };
 
@@ -175,6 +191,20 @@ export const buildCustomMessage = (description, from, to, action) => (
         to,
         jsongle: {
             action,
+            description,
+        },
+    }
+);
+
+export const buildQuery = (type, query, from, to, description, transaction) => (
+    {
+        id: generateNewId(),
+        from,
+        to,
+        jsongle: {
+            transaction,
+            action: type,
+            query,
             description,
         },
     }

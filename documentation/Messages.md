@@ -313,6 +313,27 @@ The **session-terminate** message is sent by the issuer or the responder when th
 }
 ```
 
+## session-hello
+
+The **session-hello** message is sent by the server when connected. 
+
+```json
+{
+    "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
+    "from": "barracuda",
+    "to": "70001",
+    "jsongle": {
+        "action": "session-hello",
+        "description": { 
+          "version": "1.0.0", 
+          "sn": "barracuda", 
+          "info": "JSONgle Signaling Server", 
+          "connected": "2021-04-29T16:07:10.476Z"
+        }
+    }
+}
+```
+
 ## session-custom
 
 The **session-custom** message is sent by the issuer or the responder when he want to exchange custom or arbitrary (JSON based) data. 
@@ -327,6 +348,65 @@ The **session-custom** message is sent by the issuer or the responder when he wa
         "description": { 
           // custom part
          }
+    }
+}
+```
+
+## iq-set
+
+The **iq-set** message is sent by the issuer to request a service. It contains a query and optionaly a JSON data.
+
+```json
+{
+    "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
+    "from": "70001",
+    "to": "70002",
+    "jsongle": {
+        "action": "iq-set",
+        "query": "session-register",
+        "transaction": "0d424e84-c3f0-48c4",
+        "description": { 
+          // data required by the query if any
+         }
+    }
+}
+```
+
+## iq-result
+
+The **iq-result** message is sent by the provider of the service in case of success.
+
+```json
+{
+    "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
+    "from": "70001",
+    "to": "70002",
+    "jsongle": {
+        "action": "iq-result",
+        "query": "session-register",
+        "transaction": "0d424e84-c3f0-48c4",
+        "description": { "joined": "2020-09-10T17:50:26.061Z" } // additional properties depending on the result if any
+    }
+}
+```
+
+## iq-error
+
+The **iq-error** message is sent by the provider of the service in case of error. **iq-error** always contains at least an `errorCode` and an `errorDetails` properties.
+
+```json
+{
+    "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
+    "from": "70001",
+    "to": "70002",
+    "jsongle": {
+        "action": "iq-error",
+        "query": "session-register",
+        "transaction": "0d424e84-c3f0-48c4",
+        "description": { 
+          "errorCode": 400101,
+          "errorDetails": "Missing 'rid' parameter in query" 
+        } // additional properties depending on the result if any
     }
 }
 ```

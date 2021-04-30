@@ -14,7 +14,7 @@ import Call from "./Call";
 const moduleName = "call-handler";
 
 const isStateActionValidInState = (action, state) => {
-    const currentState = state || CALL_STATE.NEW;
+    const currentState = state || CALL_STATE.FREE;
 
     // Return false if current state is not handled
     if (!(currentState in STATES)) {
@@ -51,6 +51,7 @@ export default class CallHandler {
             onlocalcallunmuted: null,
             onticket: null,
             ondatareceived: null,
+            onhello: null,
         };
     }
 
@@ -120,6 +121,14 @@ export default class CallHandler {
                 this.send(false, msg);
             };
 
+            routing[STATE_ACTIONS.HELLO] = () => {
+                this.hello(msg);
+            };
+
+            routing[STATE_ACTIONS.IQ] = () => {
+                this.iq(msg);
+            };
+
             if (!(action in routing)) {
                 warn(moduleName, `transition '${action}' is not yet implemented`);
                 return;
@@ -136,7 +145,7 @@ export default class CallHandler {
 
         debug(moduleName, `handle action '${action}'`);
         const stateAction = getCallStateActionFromSignalingAction(action, reason);
-        const currentState = this._currentCall ? this._currentCall.state : CALL_STATE.NEW;
+        const currentState = this._currentCall ? this._currentCall.state : CALL_STATE.FREE;
         debug(moduleName, `try to execute '${stateAction}' in state '${currentState}'`);
         const isStateActionValid = isStateActionValidInState(stateAction, currentState);
 
@@ -400,16 +409,38 @@ export default class CallHandler {
         }
     }
 
+    hello(msg) {
+        debug(moduleName, "received hello msg");
+        this.fireOnHelloReceived(msg);
+    }
+
+    iq(msg) {
+        const { jsongle } = msg;
+        const { action, query } = jsongle;
+        debug(moduleName, `received iq ${action} with query ${query}`);
+        this.fireIQAnswer(msg);
+    }
+
     noop() {
         debug(moduleName, "do nothing - strange!");
     }
 
     registerCallback(name, callback) {
         if (name in this._callbacks) {
-            this._callbacks[name] = callback;
             debug(moduleName, `registered callback '${name}'`);
         } else {
-            error(moduleName, `can't register callback for '${name}'`);
+            debug(moduleName, `registered once callback '${name}'`);
+        }
+        this._callbacks[name] = callback;
+    }
+
+    unregisterCallback(name) {
+        if (name in this._callbacks) {
+            this._callbacks[name] = null;
+            delete this._callbacks[name];
+            debug(moduleName, `unregistered callback '${name}'`);
+        } else {
+            warn(moduleName, `can't unregister callback for '${name}'`);
         }
     }
 
@@ -483,6 +514,19 @@ export default class CallHandler {
     fireOnDataMsgReceived(msg) {
         if (this._callbacks.ondatareceived) {
             this._callbacks.ondatareceived(msg.jsongle, msg.from);
+        }
+    }
+
+    fireOnHelloReceived(msg) {
+        if (this._callbacks.onhello) {
+            this._callbacks.onhello(msg.jsongle, msg.from);
+        }
+    }
+
+    fireIQAnswer(msg) {
+        if (this._callbacks[msg.jsongle.transaction]) {
+            this._callbacks[msg.jsongle.transaction](msg);
+            this.unregisterCallback(msg.jsongle.transaction);
         }
     }
 

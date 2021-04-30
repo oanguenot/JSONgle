@@ -15,7 +15,7 @@ export default class Transport {
         // Define the callback function to use when receiving new messages
         this._transport.in((message) => {
             // TODO: check message integerity: has message.action ?
-            debug(moduleNameReceived, `receive message ${message.id} with action '${message.jsongle.action}' and reason '${message.jsongle.reason}'`);
+            debug(moduleNameReceived, `receive message ${message.id} with action '${message.jsongle.action}'`);
             callback.call(context, message);
         });
     }

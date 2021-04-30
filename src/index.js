@@ -1,4 +1,4 @@
-import { getLibName, getVersion } from "./utils/helper";
+import { getLibName, getVersion, generateNewId } from "./utils/helper";
 
 import Peer from "./peer/Peer";
 import CallHandler from "./protocol/CallHandler";
@@ -16,6 +16,7 @@ import {
     CALL_ESTABLISHING_STATE,
     JSONGLE_ACTIONS,
     buildCustomMessage,
+    buildQuery,
 } from "./protocol/jsongle";
 
 const moduleName = "jsongle-indx";
@@ -205,7 +206,7 @@ export default class JSONgle {
 
     /**
      * Send the candidate to the recipient
-     * @param {*} candidate The candidate to send
+     * @param {Object} candidate The candidate to send
      */
     sendCandidate(candidate) {
         if (!this.currentCall) {
@@ -221,11 +222,35 @@ export default class JSONgle {
 
     /**
      * Send a custom message
-     * @param {Object} msg The message to send
+     * @param {string} to The id of the recipient, a room or the server
+     * @param {Object} content The message to send
      */
-    send(msg, to, action = JSONGLE_ACTIONS.CUSTOM) {
-        const jsongleMsg = buildCustomMessage(msg, this._peerStore.getState().peer.id, to, action);
+    send(to, content) {
+        const jsongleMsg = buildCustomMessage(content, this._peerStore.getState().peer.id, to, JSONGLE_ACTIONS.CUSTOM);
         this._callHandler.send(true, jsongleMsg);
+    }
+
+    /**
+     * Send a query set to a recipient, a room or the server
+     * @param {string} to The id of the recipient, room or server
+     * @param {string} query The query to execute (eg: session-register)
+     * @param {object} content The JSON content
+     * @param {*} transaction A transaction id (a default one is generated if not set)
+     */
+    iq(to, query, content, transaction = generateNewId()) {
+        return new Promise((resolve, reject) => {
+            this._callHandler.registerCallback(transaction, (msg) => {
+                const { jsongle } = msg;
+                if (jsongle.action === JSONGLE_ACTIONS.IQ_ERROR) {
+                    reject(msg.jsongle);
+                } else {
+                    resolve(msg.jsongle);
+                }
+            });
+
+            const jsongleMsg = buildQuery(JSONGLE_ACTIONS.IQ_SET, query, this._peerStore.getState().peer.id, to, content, transaction);
+            this._callHandler.send(true, jsongleMsg);
+        });
     }
 
     /**
@@ -317,10 +342,17 @@ export default class JSONgle {
     }
 
     /**
-     * Register to event 'ondatareceived
+     * Register to event 'ondatareceived'
      */
     set ondatareceived(callback) {
         this._callHandler.registerCallback("ondatareceived", callback);
+    }
+
+    /**
+     * Register to event 'onhello'
+     */
+     set onhello(callback) {
+        this._callHandler.registerCallback("onhello", callback);
     }
 
     /**

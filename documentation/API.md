@@ -40,7 +40,7 @@ jsongle.onticket = (ticket) => {
 
 The **JSONgle** object instance offers the following methods:
 
-### call(string: id, string: type)
+### call(string: id, (optional)string: type = 'audio')
 
 This method calls a user.
 
@@ -214,28 +214,49 @@ jsongle.oncallended = (hasBeenInitiated) => {
 jsongle.end();
 ```
 
-### send(object: description, string: to, optional(string): action)
+### send(string: to, object: content)
 
 At anytime, a custom message can be exchanged to specific recipient (identified by his id), a room (identified by a roomid) or to the server directly (identified by the 'sn' property received in the **session-hello** event) by using the **send** method.
 
-**description** is an object that replaces the content of the `description` property in the JSONgle message.
-
-If no **action** is specified (can be anything), a default `session-custom` value is set.
+**content** is an object that replaces the content of the `description` property in the JSONgle message.
 
 ```js
 // Custom message
-const msg={
-  uid: 'eMVTtWVSL5pzJaDTAAAJ',
-  rid: 'room4'
-}
+const msgData={
+  presence: 'available',
+};
 
-jsongle.send(msg, 'user_4', 'session-custom');
+jsongle.send('user_4', msgData);
 
 //On 'user_4'
 jsongle.ondatareceived = (content, from) => {
   // Do something with the content received 
-  // content = { action: session-custom, description: { uid= 'eMVTtWVSL5pzJaDTAAAJ', rid:'room4' } }
+  // content = { action: session-custom, description: { presence: 'available' } }
 }
-````
+```
 
 By listening to the event `ondatareceived`, the remote recipient is able to handle the content of that message.
+
+### iq(string: to, string: query, object: content) -> Promise
+
+At anytime, a request can be send to the server to execute an action (eg: registering to a room). For that, JSONgle offers the `iq` method that is a **Promise**.
+
+**content** is an object representing the requested data to send.
+
+**query** is the method that will be executed.
+
+Once the server has performed the request, it sends back an asynchronous answer that is handled by that promise.
+
+```js
+// A request
+const requestData = {
+  rid: '188-4225-bf3a-d4ad43654697',
+}
+
+try {
+  const result = await jsongle.iq('barracuda', 'session-register', requestData);
+  // Do something in case of the request has been successfully executed
+} catch(err) {
+  // Do something in case the request failed
+}
+```
