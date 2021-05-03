@@ -1,11 +1,8 @@
 import { getLibName, getVersion, generateNewId } from "./utils/helper";
-
-import Peer from "./peer/Peer";
 import CallHandler from "./protocol/CallHandler";
 import { setVerboseLog, debug, info } from "./utils/log";
 import { createStore } from "./data/Store";
 import { reducer as callReducer } from "./data/CallsReducer";
-import { reducer as peerReducer, PEER_ACTIONS } from "./data/PeerReducer";
 import {
     CALL_STATE,
     CALL_MEDIA,
@@ -15,7 +12,7 @@ import {
     CALL_ACTIVE_STATE,
     CALL_ESTABLISHING_STATE,
     JSONGLE_ACTIONS,
-    buildCustomMessage,
+    buildCustom,
     buildQuery,
 } from "./protocol/jsongle";
 
@@ -40,8 +37,6 @@ export default class JSONgle {
         info(moduleName, `welcome to ${this.name} version ${this.version}`);
 
         this._callStore = createStore(callReducer);
-        this._peerStore = createStore(peerReducer);
-        this._peerStore.dispatch({ type: PEER_ACTIONS.SET_PEER, payload: { peer: new Peer(cfg.peer) } });
         this._callHandler = new CallHandler(this._callStore, cfg.transport);
     }
 
@@ -226,7 +221,7 @@ export default class JSONgle {
      * @param {Object} content The message to send
      */
     send(to, content) {
-        const jsongleMsg = buildCustomMessage(content, this._peerStore.getState().peer.id, to, JSONGLE_ACTIONS.CUSTOM);
+        const jsongleMsg = buildCustom(JSONGLE_ACTIONS.CUSTOM, to, content);
         this._callHandler.send(true, jsongleMsg);
     }
 
@@ -237,18 +232,37 @@ export default class JSONgle {
      * @param {object} content The JSON content
      * @param {*} transaction A transaction id (a default one is generated if not set)
      */
-    iq(to, query, content, transaction = generateNewId()) {
+    request(to, query, content, transaction = generateNewId()) {
         return new Promise((resolve, reject) => {
             this._callHandler.registerCallback(transaction, (msg) => {
                 const { jsongle } = msg;
                 if (jsongle.action === JSONGLE_ACTIONS.IQ_ERROR) {
-                    reject(msg.jsongle);
+                    reject(jsongle);
                 } else {
-                    resolve(msg.jsongle);
+                    resolve(jsongle);
                 }
             });
 
-            const jsongleMsg = buildQuery(JSONGLE_ACTIONS.IQ_SET, query, this._peerStore.getState().peer.id, to, content, transaction);
+            const jsongleMsg = buildQuery(JSONGLE_ACTIONS.IQ_SET, query, to, content, transaction);
+            this._callHandler.send(true, jsongleMsg);
+        });
+    }
+
+    /**
+     * Answer to a query (set or get) from a recipient, a room or the server
+     * @param {string} to The id of the recipient, room or server
+     * @param {string} query The query to execute (eg: session-register)
+     * @param {object} content The JSON content
+     * @param {*} transaction A transaction id (a default one is generated if not set)
+     */
+     answer(to, query, content, transaction) {
+        return new Promise((resolve) => {
+            this._callHandler.registerCallback(transaction, (msg) => {
+                const { jsongle } = msg;
+                resolve(jsongle);
+            });
+
+            const jsongleMsg = buildQuery(JSONGLE_ACTIONS.IQ_RESULT, query, to, content, transaction);
             this._callHandler.send(true, jsongleMsg);
         });
     }
@@ -349,10 +363,17 @@ export default class JSONgle {
     }
 
     /**
-     * Register to event 'onhello'
+     * Register to event 'onerror'
      */
-     set onhello(callback) {
-        this._callHandler.registerCallback("onhello", callback);
+    set onerror(callback) {
+        this._callHandler.registerCallback("onerror", callback);
+    }
+
+    /**
+     * Register to event 'oniq'
+     */
+    set onrequest(callback) {
+        this._callHandler.registerCallback("onrequest", callback);
     }
 
     /**

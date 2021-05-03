@@ -17,6 +17,8 @@
 | `onlocalcallmuted`            | Fired when the local stream has been muted.<br>The event contains the `Call` | 
 | `onlocalcallunmuted`            | Fired when the local stream has been muted.<br>The event contains the `Call` |
 | `ondatareceived`  | Fired when a custom message has been received.<br>The event contains an `Object` representing the content and a `string` representing the issuer |
+| `onerror`  | Fired on general error received not linked to an IQ request.<br>The event contains an `Object` representing the error and a `string` representing the issuer (often the server) |
+| `onrequest`  | Fired when a request has been received (can be an `iq-set` or an `iq-get`).<br>The event contains an `Object` representing the request and a `string` representing the issuer.<br>Sending an answer using the method **answer()** is required to fullfil that request. |
 
 Here is an example of registering to an event
 

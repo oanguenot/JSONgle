@@ -6,6 +6,8 @@ import {
     STATES,
     getCallStateActionFromSignalingAction,
     SESSION_INFO_REASON,
+    JSONGLE_ACTIONS,
+    IQ_QUERY,
 } from "./jsongle";
 import Transport from "../transport/Transport";
 import { CALL_ACTIONS } from "../data/CallsReducer";
@@ -51,7 +53,8 @@ export default class CallHandler {
             onlocalcallunmuted: null,
             onticket: null,
             ondatareceived: null,
-            onhello: null,
+            onerror: null,
+            onrequest: null,
         };
     }
 
@@ -121,12 +124,16 @@ export default class CallHandler {
                 this.send(false, msg);
             };
 
-            routing[STATE_ACTIONS.HELLO] = () => {
-                this.hello(msg);
+            routing[STATE_ACTIONS.ERROR] = () => {
+                this.error(msg);
             };
 
             routing[STATE_ACTIONS.IQ] = () => {
                 this.iq(msg);
+            };
+
+            routing[STATE_ACTIONS.ACK] = () => {
+                this.ack(msg);
             };
 
             if (!(action in routing)) {
@@ -409,16 +416,32 @@ export default class CallHandler {
         }
     }
 
-    hello(msg) {
-        debug(moduleName, "received hello msg");
-        this.fireOnHelloReceived(msg);
+    error(msg) {
+        debug(moduleName, "received error msg");
+        this.fireOnErrorReceived(msg);
     }
 
     iq(msg) {
         const { jsongle } = msg;
         const { action, query } = jsongle;
-        debug(moduleName, `received iq ${action} with query ${query}`);
-        this.fireIQAnswer(msg);
+        debug(moduleName, `received ${action} with query ${query}`);
+
+        if (action === JSONGLE_ACTIONS.IQ_GET || action === JSONGLE_ACTIONS.IQ_SET) {
+            if (action === JSONGLE_ACTIONS.IQ_GET && query === IQ_QUERY.SESSION_HELLO) {
+                // Manage server side identity received
+                this._transport.from = msg.to;
+            }
+            this.fireRequestReceived(msg);
+        } else {
+            this.fireAnswer(msg);
+        }
+    }
+
+    ack(msg) {
+        const { jsongle } = msg;
+        const { action } = jsongle;
+        debug(moduleName, `received ${action}`);
+        this.fireAnswer(msg);
     }
 
     noop() {
@@ -429,7 +452,7 @@ export default class CallHandler {
         if (name in this._callbacks) {
             debug(moduleName, `registered callback '${name}'`);
         } else {
-            debug(moduleName, `registered once callback '${name}'`);
+            debug(moduleName, `registered volatile callback '${name}'`);
         }
         this._callbacks[name] = callback;
     }
@@ -517,16 +540,24 @@ export default class CallHandler {
         }
     }
 
-    fireOnHelloReceived(msg) {
-        if (this._callbacks.onhello) {
-            this._callbacks.onhello(msg.jsongle, msg.from);
+    fireOnErrorReceived(msg) {
+        if (this._callbacks.onerror) {
+            this._callbacks.onerror(msg.jsongle, msg.from);
         }
     }
 
-    fireIQAnswer(msg) {
+    fireAnswer(msg) {
         if (this._callbacks[msg.jsongle.transaction]) {
             this._callbacks[msg.jsongle.transaction](msg);
             this.unregisterCallback(msg.jsongle.transaction);
+        } else {
+            warn(moduleName, `no transaction handler ${msg.jsongle.transaction} registered`);
+        }
+    }
+
+    fireRequestReceived(msg) {
+        if (this._callbacks.onrequest) {
+            this._callbacks.onrequest(msg.jsongle, msg.from);
         }
     }
 

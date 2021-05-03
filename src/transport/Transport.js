@@ -11,10 +11,11 @@ export default class Transport {
         }
         this._transport = cfg.transport;
         this._name = cfg.name;
+        this._from = null;
 
         // Define the callback function to use when receiving new messages
         this._transport.in((message) => {
-            // TODO: check message integerity: has message.action ?
+            // TODO: check message integrity: has message.action ?
             debug(moduleNameReceived, `receive message ${message.id} with action '${message.jsongle.action}'`);
             callback.call(context, message);
         });
@@ -22,6 +23,14 @@ export default class Transport {
 
     get name() {
         return this._name;
+    }
+
+    get from() {
+        return this._from;
+    }
+
+    set from(value) {
+        this._from = value;
     }
 
     sendMessage(message) {
@@ -32,7 +41,9 @@ export default class Transport {
             throw new Error("Incorrect 'action' - noop");
         }
 
-        debug(moduleNameSend, `send message ${message.id} with action '${message.jsongle.action}'`);
-        this._transport.out(message);
+        const completeMessage = { ...message, from: this._from };
+
+        debug(moduleNameSend, `send message ${completeMessage.id} with action '${completeMessage.jsongle.action}'`);
+        this._transport.out(completeMessage);
     }
 }

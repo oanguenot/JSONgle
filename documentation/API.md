@@ -237,9 +237,9 @@ jsongle.ondatareceived = (content, from) => {
 
 By listening to the event `ondatareceived`, the remote recipient is able to handle the content of that message.
 
-### iq(string: to, string: query, object: content) -> Promise
+### request(string: to, string: query, object: content) -> Promise
 
-At anytime, a request can be send to the server to execute an action (eg: registering to a room). For that, JSONgle offers the `iq` method that is a **Promise**.
+At anytime, a request can be send to the server to execute an action (eg: registering to a room). For that, JSONgle offers the `request` method that is a **Promise**.
 
 **content** is an object representing the requested data to send.
 
@@ -254,9 +254,34 @@ const requestData = {
 }
 
 try {
-  const result = await jsongle.iq('barracuda', 'session-register', requestData);
+  const result = await jsongle.request('barracuda', 'session-join', requestData);
   // Do something in case of the request has been successfully executed
 } catch(err) {
   // Do something in case the request failed
 }
+```
+
+### answer(string: to, string: query, object: content; string: transaction) -> Promise
+
+When a request has been caught by the `onrequest` handler, the application can answer using the method **answer()** 
+
+**content** is an object representing the response data to send.
+
+**query** should be set to the same value as received. Same for the **transaction** property.
+
+Once the server has received the response, it sends back an `ack`. When an error occurs (eg: bad parameters), the `onerror` handler is fired and contains the description of the error received.
+
+```js
+// A request
+const  = {
+  rid: '188-4225-bf3a-d4ad43654697',
+}
+
+jsongle.onrequest((request, from) => {
+  if(request.action === 'iq-get' && request.query === 'session-hello') {
+    jsongle.answer(from, 'session-hello', {'uid':'jdoe@mycorp.com', 'dn': 'Jon Doe', }, request.transaction);
+  }
+});
+
+
 ```

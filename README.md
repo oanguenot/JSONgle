@@ -82,21 +82,6 @@ const transportCfg = {
     transport: transportWrapper(io),
 };
 ```
-
-### Defining the user identity
-
-As now, the identity of the user is used to allow the recipient to identify the caller.
-
-You can use any kinds of unique `id` such as the user database identifier. It will be up to your application to identify that user from your database.
-
-```js
-const peerCfg = {
-    id: "43eed341123123",
-};
-```
-
-_Note_: This `id` is used by JSONgle when generating messages. All messages will have a `from` and `to` field that will contain the `id` of the caller and the callee.
-
 ### Initialize JSONgle
 
 Once the configurations are ok, initialize **JSONgle**
@@ -106,7 +91,6 @@ import JSONGle from "jsongle";
 
 const jsongle = new JSONGle({
     transport: transportCfg,
-    peer: peerCfg,
 });
 ```
 

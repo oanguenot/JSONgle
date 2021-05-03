@@ -16,7 +16,7 @@ export const JSONGLE_ACTIONS = {
     IQ_RESULT: "iq-result",
     IQ_ERROR: "iq-error",
     ERROR: "session-error",
-    HELLO: "session-hello",
+    ACK: "ack",
     NOOP: "noop",
 };
 
@@ -39,7 +39,8 @@ export const STATE_ACTIONS = {
     UNMUTE: "unmute",
     SEND: "send",
     IQ: "iq",
-    HELLO: "hello",
+    ERROR: "error",
+    ACK: "ack",
     NOOP: "noop",
 };
 
@@ -53,6 +54,10 @@ export const SESSION_INFO_REASON = {
     ACTIVE: "active",
     MUTE: "mute",
     UNMUTE: "unmute",
+};
+
+export const IQ_QUERY = {
+    SESSION_HELLO: "session-hello",
 };
 
 export const USER_ACTIVITY = {
@@ -116,14 +121,14 @@ export const CALL_ESTABLISHING_STATE = {
 };
 
 const stateMachine = {};
-stateMachine[CALL_STATE.FREE] = [STATE_ACTIONS.SEND, STATE_ACTIONS.IQ, STATE_ACTIONS.HELLO];
-stateMachine[CALL_STATE.NEW] = [STATE_ACTIONS.TRY, STATE_ACTIONS.PROPOSE, STATE_ACTIONS.UNREACH, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ];
-stateMachine[CALL_STATE.TRYING] = [STATE_ACTIONS.RING, STATE_ACTIONS.RETRACT, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ];
-stateMachine[CALL_STATE.RINGING] = [STATE_ACTIONS.DECLINE, STATE_ACTIONS.PROCEED, STATE_ACTIONS.RETRACT, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ];
-stateMachine[CALL_STATE.PROCEEDED] = [STATE_ACTIONS.INITIATE, STATE_ACTIONS.CANCEL, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ];
-stateMachine[CALL_STATE.OFFERING] = [STATE_ACTIONS.ACCEPT, STATE_ACTIONS.TRANSPORT, STATE_ACTIONS.ACTIVATE, STATE_ACTIONS.CANCEL, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ];
-stateMachine[CALL_STATE.ACTIVE] = [STATE_ACTIONS.END, STATE_ACTIONS.ACTIVATE, STATE_ACTIONS.MUTE, STATE_ACTIONS.UNMUTE, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ];
-stateMachine[CALL_STATE.ENDED] = [STATE_ACTIONS.SEND];
+stateMachine[CALL_STATE.FREE] = [STATE_ACTIONS.SEND, STATE_ACTIONS.IQ, STATE_ACTIONS.ERROR, STATE_ACTIONS.ACK];
+stateMachine[CALL_STATE.NEW] = [STATE_ACTIONS.TRY, STATE_ACTIONS.PROPOSE, STATE_ACTIONS.UNREACH, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ, STATE_ACTIONS.ERROR, STATE_ACTIONS.ACK];
+stateMachine[CALL_STATE.TRYING] = [STATE_ACTIONS.RING, STATE_ACTIONS.RETRACT, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ, STATE_ACTIONS.ERROR, STATE_ACTIONS.ACK];
+stateMachine[CALL_STATE.RINGING] = [STATE_ACTIONS.DECLINE, STATE_ACTIONS.PROCEED, STATE_ACTIONS.RETRACT, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ, STATE_ACTIONS.ERROR, STATE_ACTIONS.ACK];
+stateMachine[CALL_STATE.PROCEEDED] = [STATE_ACTIONS.INITIATE, STATE_ACTIONS.CANCEL, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ, STATE_ACTIONS.ERROR, STATE_ACTIONS.ACK];
+stateMachine[CALL_STATE.OFFERING] = [STATE_ACTIONS.ACCEPT, STATE_ACTIONS.TRANSPORT, STATE_ACTIONS.ACTIVATE, STATE_ACTIONS.CANCEL, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ, STATE_ACTIONS.ERROR, STATE_ACTIONS.ACK];
+stateMachine[CALL_STATE.ACTIVE] = [STATE_ACTIONS.END, STATE_ACTIONS.ACTIVATE, STATE_ACTIONS.MUTE, STATE_ACTIONS.UNMUTE, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ, STATE_ACTIONS.ERROR, STATE_ACTIONS.ACK];
+stateMachine[CALL_STATE.ENDED] = [STATE_ACTIONS.SEND, STATE_ACTIONS.ERROR, STATE_ACTIONS.ACK];
 
 export const STATES = stateMachine;
 
@@ -171,23 +176,22 @@ export const getCallStateActionFromSignalingAction = (signalingAction, reason) =
                     return STATE_ACTIONS.NOOP;
             }
         case JSONGLE_ACTIONS.ERROR:
-            return STATE_ACTIONS.SEND;
-        case JSONGLE_ACTIONS.HELLO:
-            return STATE_ACTIONS.HELLO;
+            return STATE_ACTIONS.ERROR;
         case JSONGLE_ACTIONS.IQ_SET:
         case JSONGLE_ACTIONS.IQ_RESULT:
         case JSONGLE_ACTIONS.IQ_GET:
         case JSONGLE_ACTIONS.IQ_ERROR:
             return STATE_ACTIONS.IQ;
+        case JSONGLE_ACTIONS.ACK:
+            return STATE_ACTIONS.ACK;
         default:
             return STATE_ACTIONS.SEND;
     }
 };
 
-export const buildCustomMessage = (description, from, to, action) => (
+export const buildCustom = (action, to, description) => (
     {
         id: generateNewId(),
-        from,
         to,
         jsongle: {
             action,
@@ -196,15 +200,14 @@ export const buildCustomMessage = (description, from, to, action) => (
     }
 );
 
-export const buildQuery = (type, query, from, to, description, transaction) => (
+export const buildQuery = (action, query, to, description, transaction) => (
     {
         id: generateNewId(),
-        from,
         to,
         jsongle: {
-            transaction,
-            action: type,
+            action,
             query,
+            transaction,
             description,
         },
     }
