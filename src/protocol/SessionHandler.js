@@ -13,7 +13,7 @@ import Transport from "../transport/Transport";
 import { CALL_ACTIONS } from "../data/CallsReducer";
 import Call from "./Call";
 
-const moduleName = "call-handler";
+const moduleName = "session-handler";
 
 const isStateActionValidInState = (action, state) => {
     const currentState = state || CALL_STATE.FREE;
@@ -34,7 +34,7 @@ const isStateActionValidInState = (action, state) => {
     return true;
 };
 
-export default class CallHandler {
+export default class SessionHandler {
     constructor(callStore, transportCfg) {
         this._currentCall = null;
         this._callStore = callStore;
@@ -55,6 +55,7 @@ export default class CallHandler {
             ondatareceived: null,
             onerror: null,
             onrequest: null,
+            onevent: null,
         };
     }
 
@@ -134,6 +135,10 @@ export default class CallHandler {
 
             routing[STATE_ACTIONS.ACK] = () => {
                 this.ack(msg);
+            };
+
+            routing[STATE_ACTIONS.EVENT] = () => {
+                this.event(msg);
             };
 
             if (!(action in routing)) {
@@ -437,6 +442,10 @@ export default class CallHandler {
         }
     }
 
+    event(msg) {
+        this.fireOnEvent(msg);
+    }
+
     ack(msg) {
         const { jsongle } = msg;
         const { action } = jsongle;
@@ -558,6 +567,12 @@ export default class CallHandler {
     fireRequestReceived(msg) {
         if (this._callbacks.onrequest) {
             this._callbacks.onrequest(msg.jsongle, msg.from);
+        }
+    }
+
+    fireOnEvent(msg) {
+        if (this._callbacks.onevent) {
+            this._callbacks.onevent(msg.jsongle, msg.from);
         }
     }
 

@@ -3,12 +3,11 @@ import {
     getVersion,
     generateNewId,
 } from "./utils/helper";
-import CallHandler from "./protocol/CallHandler";
+import SessionHandler from "./protocol/SessionHandler";
 import {
     setVerboseLog,
     debug,
     info,
-    error,
 } from "./utils/log";
 import { createStore } from "./data/Store";
 import { reducer as callReducer } from "./data/CallsReducer";
@@ -48,7 +47,7 @@ export default class JSONgle {
         info(moduleName, `welcome to ${this.name} version ${this.version}`);
 
         this._callStore = createStore(callReducer);
-        this._callHandler = new CallHandler(this._callStore, cfg.transport);
+        this._callHandler = new SessionHandler(this._callStore, cfg.transport);
     }
 
     /**
@@ -422,6 +421,13 @@ export default class JSONgle {
      */
     set onrequest(callback) {
         this._callHandler.registerCallback("onrequest", callback);
+    }
+
+    /**
+     * Register to event 'onevent'
+     */
+     set onevent(callback) {
+        this._callHandler.registerCallback("onevent", callback);
     }
 
     /**

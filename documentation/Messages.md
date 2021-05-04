@@ -15,8 +15,8 @@ The **session-propose** message is sent by the issuer to propose a session (a ca
 ```json
 {
     "id": "20229102-7f9f-4ef4-87d8-481dd6ef5f85",
-    "from": "70001",
-    "to": "70002",
+    "from": "d23ab7d3-8150-4dca-83c1-9ec559e0e086",
+    "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
     "jsongle": {
         "sid": "3bf74aa9-f41d-40d5-a1d8-e3e614ba4af2",
         "action": "session-propose",
@@ -39,7 +39,7 @@ When a call is initiated to a remote peer, the server could answer to the initia
 {
     "id": "001ad89f-43f4-423f-9055-e24813e9c82a",
     "from": "server",
-    "to": "70001",
+    "to": "d23ab7d3-8150-4dca-83c1-9ec559e0e086",
     "jsongle": {
         "sid": "23dfe5aa-3e13-4203-8650-3a11bec2d373",
         "action": "session-info",
@@ -59,7 +59,7 @@ When a call is initiated to a remote peer, the server could answer to the initia
 {
     "id": "3fab1209-fb00-494f-82e4-855185a8cba6",
     "from": "server",
-    "to": "70001",
+    "to": "d23ab7d3-8150-4dca-83c1-9ec559e0e086",
     "jsongle": {
         "sid": "678403f4-7b1f-4ea5-84cb-c6699a91db22",
         "action": "session-info",
@@ -82,8 +82,8 @@ When the responder receives a **session-propose** message, he starts by answerin
 ```json
 {
     "id": "fdc216f8-3d73-4865-a3c7-b43e1f5338a3",
-    "from": "70002",
-    "to": "70001",
+    "from": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
+    "to": "d23ab7d3-8150-4dca-83c1-9ec559e0e086",
     "jsongle": {
         "sid": "678403f4-7b1f-4ea5-84cb-c6699a91db22",
         "action": "session-info",
@@ -102,8 +102,8 @@ The **session-retract** message is sent by the issuer when he wants to cancel th
 ```json
 {
     "id": "23cf5699-b746-4e21-8698-01e499b946b7",
-    "from": "70001",
-    "to": "70002",
+    "from": "d23ab7d3-8150-4dca-83c1-9ec559e0e086",
+    "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
     "jsongle": {
         "sid": "678403f4-7b1f-4ea5-84cb-c6699a91db22",
         "action": "session-retract",
@@ -122,8 +122,8 @@ The **session-decline** message is sent by the responder when he wants to declin
 ```json
 {
     "id": "29842334-91b8-4218-ac72-2fee950cf253",
-    "from": "70002",
-    "to": "70001",
+    "from": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
+    "to": "d23ab7d3-8150-4dca-83c1-9ec559e0e086",
     "jsongle": {
         "sid": "f0f3e269-e887-4d13-b140-3378357e9660",
         "action": "session-decline",
@@ -142,8 +142,8 @@ The **session-proceed** message is sent by the responder when he wants to procee
 ```json
 {
     "id": "9432a7f1-4128-417c-a0da-5b5e8e32623f",
-    "from": "70002",
-    "to": "70001",
+    "from": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
+    "to": "d23ab7d3-8150-4dca-83c1-9ec559e0e086",
     "jsongle": {
         "sid": "132a7f2b-8188-4225-bf3a-d4ad43654697",
         "action": "session-proceed",
@@ -162,8 +162,8 @@ The **session-initiate** message is sent by the issuer when he needs to exchange
 ```json
 {
     "id": "434d910c-9f26-4d1e-b8c7-ee16df9da003",
-    "from": "70001",
-    "to": "70002",
+    "from": "d23ab7d3-8150-4dca-83c1-9ec559e0e086",
+    "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
     "jsongle": {
         "sid": "132a7f2b-8188-4225-bf3a-d4ad43654697",
         "action": "session-initiate",
@@ -188,8 +188,8 @@ The **session-accept** message is sent by the responder when he needs to exchang
 ```json
 {
     "id": "1c778346-4a95-42a1-bff9-044e2c6ad584",
-    "from": "70002",
-    "to": "70001",
+    "from": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
+    "to": "d23ab7d3-8150-4dca-83c1-9ec559e0e086",
     "jsongle": {
         "sid": "132a7f2b-8188-4225-bf3a-d4ad43654697",
         "action": "session-accept",
@@ -214,8 +214,8 @@ The **transport-info** messages are sent by the issuer and the responder when th
 ```json
 {
     "id": "e1178f09-bc81-4b0f-8979-4fbdc0f223da",
-    "from": "70001",
-    "to": "70002",
+    "from": "d23ab7d3-8150-4dca-83c1-9ec559e0e086",
+    "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
     "jsongle": {
         "sid": "132a7f2b-8188-4225-bf3a-d4ad43654697",
         "action": "transport-info",
@@ -241,8 +241,8 @@ The **session-info** message with a `reason=active` is sent by the issuer and th
 ```json
 {
     "id": "1f9aed7c-dd11-42dd-bfe2-87860a5193cd",
-    "from": "70002",
-    "to": "70001",
+    "from": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
+    "to": "d23ab7d3-8150-4dca-83c1-9ec559e0e086",
     "jsongle": {
         "sid": "132a7f2b-8188-4225-bf3a-d4ad43654697",
         "action": "session-info",
@@ -260,8 +260,8 @@ The **session-info** message with a `reason=mute` is sent by the issuer when he 
 ```json
 {
     "id": "fdc216f8-3d73-4865-a3c7-b43e1f5338a3",
-    "from": "70002",
-    "to": "70001",
+    "from": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
+    "to": "d23ab7d3-8150-4dca-83c1-9ec559e0e086",
     "jsongle": {
         "sid": "678403f4-7b1f-4ea5-84cb-c6699a91db22",
         "action": "session-info",
@@ -280,8 +280,8 @@ The **session-info** message with a `reason=unmute` is sent by the issuer when h
 ```json
 {
     "id": "fdc216f8-3d73-4865-a3c7-b43e1f5338a3",
-    "from": "70002",
-    "to": "70001",
+    "from": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
+    "to": "d23ab7d3-8150-4dca-83c1-9ec559e0e086",
     "jsongle": {
         "sid": "678403f4-7b1f-4ea5-84cb-c6699a91db22",
         "action": "session-info",
@@ -300,8 +300,8 @@ The **session-terminate** message is sent by the issuer or the responder when th
 ```json
 {
     "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
-    "from": "70001",
-    "to": "70002",
+    "from": "d23ab7d3-8150-4dca-83c1-9ec559e0e086",
+    "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
     "jsongle": {
         "sid": "132a7f2b-8188-4225-bf3a-d4ad43654697",
         "action": "session-terminate",
@@ -321,7 +321,7 @@ The **session-hello** message is sent by the server when connected.
 {
     "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
     "from": "barracuda",
-    "to": "70001",
+    "to": "d23ab7d3-8150-4dca-83c1-9ec559e0e086",
     "jsongle": {
         "action": "session-hello",
         "description": { 
@@ -341,8 +341,8 @@ The **session-custom** message is sent by the issuer or the responder when he wa
 ```json
 {
     "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
-    "from": "70001",
-    "to": "70002",
+    "from": "d23ab7d3-8150-4dca-83c1-9ec559e0e086",
+    "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
     "jsongle": {
         "action": "session-custom",
         "description": { 
@@ -359,8 +359,8 @@ The **iq-set** message is sent by the issuer to request a service. It contains a
 ```json
 {
     "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
-    "from": "70001",
-    "to": "70002",
+    "from": "858888d2-8e69-4910-9893-b979ddbc8c15",
+    "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
     "jsongle": {
         "action": "iq-set",
         "query": "session-register",
@@ -379,13 +379,15 @@ The **iq-result** message is sent by the provider of the service in case of succ
 ```json
 {
     "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
-    "from": "70001",
-    "to": "70002",
+    "from": "858888d2-8e69-4910-9893-b979ddbc8c15",
+    "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
     "jsongle": {
         "action": "iq-result",
         "query": "session-register",
         "transaction": "0d424e84-c3f0-48c4",
-        "description": { "joined": "2020-09-10T17:50:26.061Z" } // additional properties depending on the result if any
+        "description": { 
+          // data 
+         }
     }
 }
 ```
@@ -397,8 +399,8 @@ The **iq-error** message is sent by the provider of the service in case of error
 ```json
 {
     "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
-    "from": "70001",
-    "to": "70002",
+    "from": "858888d2-8e69-4910-9893-b979ddbc8c15",
+    "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
     "jsongle": {
         "action": "iq-error",
         "query": "session-register",
@@ -407,6 +409,43 @@ The **iq-error** message is sent by the provider of the service in case of error
           "errorCode": 400101,
           "errorDetails": "Missing 'rid' parameter in query" 
         } // additional properties depending on the result if any
+    }
+}
+```
+
+## ack
+
+The **ack** message is sent by the server to confirm the reception of a message expected by the server.
+
+```json
+{
+    "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
+    "from": "858888d2-8e69-4910-9893-b979ddbc8c15",
+    "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
+    "jsongle": {
+        "action": "ack",
+        "status": "success",      // Could be 'failed'
+        "transaction": "0d424e84-c3f0-48c4",
+    }
+}
+```
+
+## session-event
+
+The **session-event** message is sent by the server to inform about actions done by other users.
+
+```json
+{
+    "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
+    "from": "858888d2-8e69-4910-9893-b979ddbc8c15",
+    "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
+    "jsongle": {
+        "action": "session-event",
+        "namespace": "room",
+        "event": "joined",
+        "description": {
+          // Data depending on the namespace/event
+        }
     }
 }
 ```
