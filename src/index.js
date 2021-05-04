@@ -1,6 +1,15 @@
-import { getLibName, getVersion, generateNewId } from "./utils/helper";
+import {
+    getLibName,
+    getVersion,
+    generateNewId,
+} from "./utils/helper";
 import CallHandler from "./protocol/CallHandler";
-import { setVerboseLog, debug, info } from "./utils/log";
+import {
+    setVerboseLog,
+    debug,
+    info,
+    error,
+} from "./utils/log";
 import { createStore } from "./data/Store";
 import { reducer as callReducer } from "./data/CallsReducer";
 import {
@@ -15,6 +24,8 @@ import {
     buildCustom,
     buildQuery,
 } from "./protocol/jsongle";
+
+const REQUEST_TIMEOUT = 5000;
 
 const moduleName = "jsongle-indx";
 
@@ -232,19 +243,38 @@ export default class JSONgle {
      * @param {object} content The JSON content
      * @param {*} transaction A transaction id (a default one is generated if not set)
      */
-    request(to, query, content, transaction = generateNewId()) {
+    async request(to, query, content, transaction = generateNewId()) {
         return new Promise((resolve, reject) => {
-            this._callHandler.registerCallback(transaction, (msg) => {
-                const { jsongle } = msg;
-                if (jsongle.action === JSONGLE_ACTIONS.IQ_ERROR) {
-                    reject(jsongle);
-                } else {
-                    resolve(jsongle);
-                }
+            let id;
+
+            const timeout = new Promise((_, rej) => {
+                id = setTimeout(() => {
+                    rej(new Error("Request timed out"));
+                }, REQUEST_TIMEOUT);
             });
 
-            const jsongleMsg = buildQuery(JSONGLE_ACTIONS.IQ_SET, query, to, content, transaction);
-            this._callHandler.send(true, jsongleMsg);
+            const fct = new Promise((res, rej) => {
+                this._callHandler.registerCallback(transaction, (msg) => {
+                    const { jsongle } = msg;
+                    if (jsongle.action === JSONGLE_ACTIONS.IQ_ERROR) {
+                        rej(jsongle);
+                    } else {
+                        res(jsongle);
+                    }
+                });
+
+                const jsongleMsg = buildQuery(JSONGLE_ACTIONS.IQ_SET, query, to, content, transaction);
+                this._callHandler.send(true, jsongleMsg);
+            });
+
+            Promise.race([fct, timeout]).then((jsongle) => {
+                resolve(jsongle);
+            }).catch((err) => {
+                this._callHandler.unregisterCallback(transaction);
+                reject(err);
+            }).finally(() => {
+                clearTimeout(id);
+            });
         });
     }
 
@@ -256,14 +286,32 @@ export default class JSONgle {
      * @param {*} transaction A transaction id (a default one is generated if not set)
      */
      answer(to, query, content, transaction) {
-        return new Promise((resolve) => {
-            this._callHandler.registerCallback(transaction, (msg) => {
-                const { jsongle } = msg;
-                resolve(jsongle);
+        return new Promise((resolve, reject) => {
+            let id;
+
+            const timeout = new Promise((_, rej) => {
+                id = setTimeout(() => {
+                    rej(new Error("Request timed out"));
+                }, REQUEST_TIMEOUT);
             });
 
-            const jsongleMsg = buildQuery(JSONGLE_ACTIONS.IQ_RESULT, query, to, content, transaction);
-            this._callHandler.send(true, jsongleMsg);
+            const fct = new Promise((res) => {
+                this._callHandler.registerCallback(transaction, (msg) => {
+                    const { jsongle } = msg;
+                    res(jsongle);
+                });
+                const jsongleMsg = buildQuery(JSONGLE_ACTIONS.IQ_RESULT, query, to, content, transaction);
+                this._callHandler.send(true, jsongleMsg);
+            });
+
+            Promise.race([fct, timeout]).then((jsongle) => {
+                resolve(jsongle);
+            }).catch((err) => {
+                this._callHandler.unregisterCallback(transaction);
+                reject(err);
+            }).finally(() => {
+                clearTimeout(id);
+            });
         });
     }
 
