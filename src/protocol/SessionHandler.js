@@ -168,8 +168,8 @@ export default class SessionHandler {
         route(stateAction, message);
     }
 
-    propose(fromId, toId, media) {
-        this._currentCall = new Call(fromId, toId, media, CALL_DIRECTION.OUTGOING);
+    propose(toId, media) {
+        this._currentCall = new Call(this._transport.from, toId, media, CALL_DIRECTION.OUTGOING);
 
         debug(moduleName, `propose call ${this._currentCall.id} to '${toId}' with '${media}'`);
 
@@ -225,13 +225,13 @@ export default class SessionHandler {
     }
 
     retractOrTerminate(shouldSendMessage = true, ended) {
-        if (!this._currentCall.inprogress && !this._currentCall.active) {
+        if (!this._currentCall.inProgress && !this._currentCall.active) {
             warn(moduleName, `call with sid '${this._currentCall.id}' is not in progress or active`);
             this.abort("incorrect-state");
             return;
         }
 
-        if (this._currentCall.inprogress) {
+        if (this._currentCall.inProgress) {
             if (shouldSendMessage) {
                 debug(moduleName, `retract call '${this._currentCall.id}'`);
             } else {
@@ -474,6 +474,10 @@ export default class SessionHandler {
         } else {
             warn(moduleName, `can't unregister callback for '${name}'`);
         }
+    }
+
+    get from() {
+        return this._transport.from;
     }
 
     fireOnCallStateChanged() {

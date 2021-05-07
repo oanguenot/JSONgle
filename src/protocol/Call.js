@@ -260,6 +260,7 @@ export default class Call {
 
     get inProgress() {
         return (
+            this._state === CALL_STATE.FREE ||
             this._state === CALL_STATE.NEW ||
             this._state === CALL_STATE.TRYING ||
             this._state === CALL_STATE.RINGING ||
@@ -278,6 +279,10 @@ export default class Call {
 
     get direction() {
         return this._direction;
+    }
+
+    get remote() {
+        return this._direction === CALL_DIRECTION.INCOMING;
     }
 
     get localOffer() {

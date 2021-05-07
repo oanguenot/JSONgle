@@ -47,7 +47,7 @@ export default class JSONgle {
         info(moduleName, `welcome to ${this.name} version ${this.version}`);
 
         this._callStore = createStore(callReducer);
-        this._callHandler = new SessionHandler(this._callStore, cfg.transport);
+        this._sessionHandler = new SessionHandler(this._callStore, cfg.transport);
     }
 
     /**
@@ -68,14 +68,14 @@ export default class JSONgle {
      * Return the current call or null
      */
     get currentCall() {
-        return this._callHandler.currentCall;
+        return this._sessionHandler.currentCall;
     }
 
     /**
      * Get the peer id
      */
     get id() {
-        return this._peerStore.getState().peer.id;
+        return this._sessionHandler.from;
     }
 
     /**
@@ -111,7 +111,7 @@ export default class JSONgle {
 
         debug(moduleName, `call with '${media}`);
 
-        this._callHandler.propose(this._peerStore.getState().peer.id, toId, media);
+        this._sessionHandler.propose(toId, media);
     }
 
     /**
@@ -122,7 +122,7 @@ export default class JSONgle {
             throw Error("Can't end the call - not in a call");
         }
 
-        this._callHandler.retractOrTerminate(true, new Date());
+        this._sessionHandler.retractOrTerminate(true, new Date());
     }
 
     /**
@@ -133,7 +133,7 @@ export default class JSONgle {
             throw Error("Can't end the call - not in a call");
         }
 
-        this._callHandler.proceed(true, new Date());
+        this._sessionHandler.proceed(true, new Date());
     }
 
     /**
@@ -144,7 +144,7 @@ export default class JSONgle {
             throw Error("Can't end the call - not in a call");
         }
 
-        this._callHandler.decline(true, new Date());
+        this._sessionHandler.decline(true, new Date());
     }
 
     /**
@@ -159,7 +159,7 @@ export default class JSONgle {
             throw Error("Can't mute the call - call is already muted");
         }
 
-        this._callHandler.mute(true, new Date());
+        this._sessionHandler.mute(true, new Date());
     }
 
     /**
@@ -174,7 +174,7 @@ export default class JSONgle {
             throw Error("Can't unmute the call - call is not muted");
         }
 
-        this._callHandler.unmute(true, new Date());
+        this._sessionHandler.unmute(true, new Date());
     }
 
     /**
@@ -193,9 +193,9 @@ export default class JSONgle {
         info(moduleName, `send an offer of type '${offer.type}'`);
 
         if (offer.type === "offer") {
-            this._callHandler.offer(true, offer, new Date());
+            this._sessionHandler.offer(true, offer, new Date());
         } else {
-            this._callHandler.answer(true, offer, new Date());
+            this._sessionHandler.answer(true, offer, new Date());
         }
     }
 
@@ -206,7 +206,7 @@ export default class JSONgle {
 
         info(moduleName, "set call as 'active'");
 
-        this._callHandler.active(true, new Date());
+        this._sessionHandler.active(true, new Date());
     }
 
     /**
@@ -222,7 +222,7 @@ export default class JSONgle {
             throw Error("Can't send candidate - no candidate");
         }
 
-        this._callHandler.offerCandidate(true, candidate, new Date());
+        this._sessionHandler.offerCandidate(true, candidate, new Date());
     }
 
     /**
@@ -232,7 +232,7 @@ export default class JSONgle {
      */
     send(to, content) {
         const jsongleMsg = buildCustom(JSONGLE_ACTIONS.CUSTOM, to, content);
-        this._callHandler.send(true, jsongleMsg);
+        this._sessionHandler.send(true, jsongleMsg);
     }
 
     /**
@@ -253,7 +253,7 @@ export default class JSONgle {
             });
 
             const fct = new Promise((res, rej) => {
-                this._callHandler.registerCallback(transaction, (msg) => {
+                this._sessionHandler.registerCallback(transaction, (msg) => {
                     const { jsongle } = msg;
                     if (jsongle.action === JSONGLE_ACTIONS.IQ_ERROR) {
                         rej(jsongle);
@@ -263,13 +263,13 @@ export default class JSONgle {
                 });
 
                 const jsongleMsg = buildQuery(JSONGLE_ACTIONS.IQ_SET, query, to, content, transaction);
-                this._callHandler.send(true, jsongleMsg);
+                this._sessionHandler.send(true, jsongleMsg);
             });
 
             Promise.race([fct, timeout]).then((jsongle) => {
                 resolve(jsongle);
             }).catch((err) => {
-                this._callHandler.unregisterCallback(transaction);
+                this._sessionHandler.unregisterCallback(transaction);
                 reject(err);
             }).finally(() => {
                 clearTimeout(id);
@@ -295,18 +295,18 @@ export default class JSONgle {
             });
 
             const fct = new Promise((res) => {
-                this._callHandler.registerCallback(transaction, (msg) => {
+                this._sessionHandler.registerCallback(transaction, (msg) => {
                     const { jsongle } = msg;
                     res(jsongle);
                 });
                 const jsongleMsg = buildQuery(JSONGLE_ACTIONS.IQ_RESULT, query, to, content, transaction);
-                this._callHandler.send(true, jsongleMsg);
+                this._sessionHandler.send(true, jsongleMsg);
             });
 
             Promise.race([fct, timeout]).then((jsongle) => {
                 resolve(jsongle);
             }).catch((err) => {
-                this._callHandler.unregisterCallback(transaction);
+                this._sessionHandler.unregisterCallback(transaction);
                 reject(err);
             }).finally(() => {
                 clearTimeout(id);
@@ -319,7 +319,7 @@ export default class JSONgle {
      * Fired when the state of the call has changed
      */
     set oncallstatechanged(callback) {
-        this._callHandler.registerCallback("oncallstatechanged", callback);
+        this._sessionHandler.registerCallback("oncallstatechanged", callback);
     }
 
     /**
@@ -327,7 +327,7 @@ export default class JSONgle {
      * Fired when a call has been initiated or received
      */
     set oncall(callback) {
-        this._callHandler.registerCallback("oncall", callback);
+        this._sessionHandler.registerCallback("oncall", callback);
     }
 
     /**
@@ -335,7 +335,7 @@ export default class JSONgle {
      * Fired when the current call has been ended (aborded, declined, retracted, disconnected)
      */
     set oncallended(callback) {
-        this._callHandler.registerCallback("oncallended", callback);
+        this._sessionHandler.registerCallback("oncallended", callback);
     }
 
     /**
@@ -343,7 +343,7 @@ export default class JSONgle {
      * Fired when the current call needs an offer to continue (from the PeerConnection)
      */
     set onofferneeded(callback) {
-        this._callHandler.registerCallback("onofferneeded", callback);
+        this._sessionHandler.registerCallback("onofferneeded", callback);
     }
 
     /**
@@ -351,7 +351,7 @@ export default class JSONgle {
      * Fired when the current call needs an answer to continue (from the PeerConnection)
      */
     set onofferreceived(callback) {
-        this._callHandler.registerCallback("onofferreceived", callback);
+        this._sessionHandler.registerCallback("onofferreceived", callback);
     }
 
     /**
@@ -359,7 +359,7 @@ export default class JSONgle {
      * Fired when the current call needs to give the received ICE Candidate (to the PeerConnection)
      */
     set oncandidatereceived(callback) {
-        this._callHandler.registerCallback("oncandidatereceived", callback);
+        this._sessionHandler.registerCallback("oncandidatereceived", callback);
     }
 
     /**
@@ -367,7 +367,7 @@ export default class JSONgle {
      * Fired when the call is ended
      */
     set onticket(callback) {
-        this._callHandler.registerCallback("onticket", callback);
+        this._sessionHandler.registerCallback("onticket", callback);
     }
 
     /**
@@ -375,7 +375,7 @@ export default class JSONgle {
      * Fired when the call is muted on the remote side
      */
      set oncallmuted(callback) {
-        this._callHandler.registerCallback("oncallmuted", callback);
+        this._sessionHandler.registerCallback("oncallmuted", callback);
     }
 
     /**
@@ -383,7 +383,7 @@ export default class JSONgle {
      * Fired when the call is unmuted on the remote side
      */
      set oncallunmuted(callback) {
-        this._callHandler.registerCallback("oncallunmuted", callback);
+        this._sessionHandler.registerCallback("oncallunmuted", callback);
     }
 
     /**
@@ -391,7 +391,7 @@ export default class JSONgle {
      * Fired when the call is muted on the local side
      */
     set onlocalcallmuted(callback) {
-        this._callHandler.registerCallback("onlocalcallmuted", callback);
+        this._sessionHandler.registerCallback("onlocalcallmuted", callback);
     }
 
     /**
@@ -399,35 +399,35 @@ export default class JSONgle {
      * Fired when the call is unmuted on the local side
      */
     set onlocalcallunmuted(callback) {
-        this._callHandler.registerCallback("onlocalcallunmuted", callback);
+        this._sessionHandler.registerCallback("onlocalcallunmuted", callback);
     }
 
     /**
      * Register to event 'ondatareceived'
      */
     set ondatareceived(callback) {
-        this._callHandler.registerCallback("ondatareceived", callback);
+        this._sessionHandler.registerCallback("ondatareceived", callback);
     }
 
     /**
      * Register to event 'onerror'
      */
     set onerror(callback) {
-        this._callHandler.registerCallback("onerror", callback);
+        this._sessionHandler.registerCallback("onerror", callback);
     }
 
     /**
      * Register to event 'oniq'
      */
     set onrequest(callback) {
-        this._callHandler.registerCallback("onrequest", callback);
+        this._sessionHandler.registerCallback("onrequest", callback);
     }
 
     /**
      * Register to event 'onevent'
      */
      set onevent(callback) {
-        this._callHandler.registerCallback("onevent", callback);
+        this._sessionHandler.registerCallback("onevent", callback);
     }
 
     /**
