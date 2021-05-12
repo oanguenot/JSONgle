@@ -11,6 +11,7 @@ export const JSONGLE_ACTIONS = {
     TERMINATE: "session-terminate",
     TRANSPORT: "transport-info",
     CUSTOM: "session-custom",
+    TEXT: "session-text",
     IQ_SET: "iq-set",
     IQ_GET: "iq-get",
     IQ_RESULT: "iq-result",
@@ -193,7 +194,7 @@ export const getCallStateActionFromSignalingAction = (signalingAction, reason) =
     }
 };
 
-export const buildCustom = (action, to, description) => (
+export const buildSimpleMessage = (action, to, description) => (
     {
         id: generateNewId(),
         to,

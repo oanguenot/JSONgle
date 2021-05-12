@@ -20,7 +20,7 @@ import {
     CALL_ACTIVE_STATE,
     CALL_ESTABLISHING_STATE,
     JSONGLE_ACTIONS,
-    buildCustom,
+    buildSimpleMessage,
     buildQuery,
 } from "./protocol/jsongle";
 
@@ -230,8 +230,18 @@ export default class JSONgle {
      * @param {string} to The id of the recipient, a room or the server
      * @param {Object} content The message to send
      */
-    send(to, content) {
-        const jsongleMsg = buildCustom(JSONGLE_ACTIONS.CUSTOM, to, content);
+    sendJSON(to, content) {
+        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.CUSTOM, to, content);
+        this._sessionHandler.send(true, jsongleMsg);
+    }
+
+    /**
+     * Send a text message
+     * @param {string} to The id of the recipient, a room or the server
+     * @param {string} content The text message to send
+     */
+     send(to, content) {
+        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.TEXT, to, { content });
         this._sessionHandler.send(true, jsongleMsg);
     }
 
@@ -407,6 +417,13 @@ export default class JSONgle {
      */
     set ondatareceived(callback) {
         this._sessionHandler.registerCallback("ondatareceived", callback);
+    }
+
+    /**
+     * Register to event 'onmessagereceived'
+     */
+     set onmessagereceived(callback) {
+        this._sessionHandler.registerCallback("onmessagereceived", callback);
     }
 
     /**

@@ -214,9 +214,9 @@ jsongle.oncallended = (hasBeenInitiated) => {
 jsongle.end();
 ```
 
-### send(string: to, object: content)
+### sendJSON(string: to, object: content)
 
-At anytime, a custom message can be exchanged to specific recipient (identified by his id), a room (identified by a roomid) or to the server directly (identified by the 'sn' property received in the **session-hello** event) by using the **send** method.
+At anytime, a custom message can be exchanged to specific recipient (identified by his id), a room (identified by a roomid) or to the server directly (identified by the 'sn' property received in the **session-hello** event) by using the **sendJSON** method.
 
 **content** is an object that replaces the content of the `description` property in the JSONgle message.
 
@@ -226,12 +226,30 @@ const msgData={
   presence: 'available',
 };
 
-jsongle.send('user_4', msgData);
+jsongle.sendJSON('user_4', msgData);
 
 //On 'user_4'
 jsongle.ondatareceived = (content, from) => {
   // Do something with the content received 
   // content = { action: session-custom, description: { presence: 'available' } }
+}
+```
+
+By listening to the event `ondatareceived`, the remote recipient is able to handle the content of that message.
+
+### send(string: to, string: content)
+
+At anytime, a text message can be exchanged to specific recipient (identified by his id), a room (identified by a roomid) or to the server directly (identified by the 'sn' property received in the **session-hello** event) by using the **send** method.
+
+**content** is the text message to send.
+
+```js
+jsongle.send('room_4', "Hello all!");
+
+//On any members of the room 'room_4'
+jsongle.onmessagereceived = (content, from) => {
+  // Do something with the content received 
+  // content = { action: session-text, description: { content: 'Hello all!' } }
 }
 ```
 

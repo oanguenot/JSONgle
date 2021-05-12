@@ -53,6 +53,7 @@ export default class SessionHandler {
             onlocalcallunmuted: null,
             onticket: null,
             ondatareceived: null,
+            onmessagereceived: null,
             onerror: null,
             onrequest: null,
             onevent: null,
@@ -413,11 +414,15 @@ export default class SessionHandler {
 
     send(shouldSendMessage, msg) {
         if (shouldSendMessage) {
-            debug(moduleName, "send custom msg");
+            debug(moduleName, "send msg");
             this._transport.sendMessage(msg);
         } else {
-            debug(moduleName, "received custom msg");
-            this.fireOnDataMsgReceived(msg);
+            debug(moduleName, "received msg");
+            if (msg.jsongle.action === JSONGLE_ACTIONS.CUSTOM) {
+                this.fireOnDataMsgReceived(msg);
+            } else {
+                this.fireOnMsgReceived(msg);
+            }
         }
     }
 
@@ -550,6 +555,12 @@ export default class SessionHandler {
     fireOnDataMsgReceived(msg) {
         if (this._callbacks.ondatareceived) {
             this._callbacks.ondatareceived(msg.jsongle, msg.from);
+        }
+    }
+
+    fireOnMsgReceived(msg) {
+        if (this._callbacks.onmessagereceived) {
+            this._callbacks.onmessagereceived(msg.jsongle, msg.from);
         }
     }
 
