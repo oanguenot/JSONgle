@@ -8,6 +8,10 @@ import {
     SESSION_INFO_REASON,
     JSONGLE_ACTIONS,
     IQ_QUERY,
+    ACK_TYPES,
+    MESSAGE_EVENTS,
+    buildAckMessage,
+    EVENTS_NAMESPACE,
 } from "./jsongle";
 import Transport from "../transport/Transport";
 import { CALL_ACTIONS } from "../data/CallsReducer";
@@ -418,6 +422,11 @@ export default class SessionHandler {
             this._transport.sendMessage(msg);
         } else {
             debug(moduleName, "received msg");
+            // acknowledge the message received
+            const ackEvent = buildAckMessage(JSONGLE_ACTIONS.EVENT, msg.from, MESSAGE_EVENTS.ACK, EVENTS_NAMESPACE.MESSAGE, { acknowledged: new Date().toJSON(), mid: msg.id, type: ACK_TYPES.RECEIVED });
+            this._transport.sendMessage(ackEvent);
+
+            // Fire the event
             if (msg.jsongle.action === JSONGLE_ACTIONS.CUSTOM) {
                 this.fireOnDataMsgReceived(msg);
             } else {
@@ -554,13 +563,13 @@ export default class SessionHandler {
 
     fireOnDataMsgReceived(msg) {
         if (this._callbacks.ondatareceived) {
-            this._callbacks.ondatareceived(msg.jsongle, msg.from);
+            this._callbacks.ondatareceived(msg.jsongle, msg.from, msg.id);
         }
     }
 
     fireOnMsgReceived(msg) {
         if (this._callbacks.onmessagereceived) {
-            this._callbacks.onmessagereceived(msg.jsongle, msg.from);
+            this._callbacks.onmessagereceived(msg.jsongle, msg.from, msg.id);
         }
     }
 

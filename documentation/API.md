@@ -226,16 +226,18 @@ const msgData={
   presence: 'available',
 };
 
-jsongle.sendJSON('user_4', msgData);
+const msgId = jsongle.sendJSON('user_4', msgData);
 
 //On 'user_4'
-jsongle.ondatareceived = (content, from) => {
+jsongle.ondatareceived = (content, from, id) => {
   // Do something with the content received 
   // content = { action: session-custom, description: { presence: 'available' } }
 }
 ```
 
 By listening to the event `ondatareceived`, the remote recipient is able to handle the content of that message.
+
+This method returns the `id` of the message generated that can be used to deal with message acknowledgements.
 
 ### send(string: to, string: content)
 
@@ -244,16 +246,34 @@ At anytime, a text message can be exchanged to specific recipient (identified by
 **content** is the text message to send.
 
 ```js
-jsongle.send('room_4', "Hello all!");
+const msgId = jsongle.send('room_4', "Hello all!");
 
 //On any members of the room 'room_4'
-jsongle.onmessagereceived = (content, from) => {
+jsongle.onmessagereceived = (content, from, id) => {
   // Do something with the content received 
   // content = { action: session-text, description: { content: 'Hello all!' } }
 }
 ```
 
 By listening to the event `ondatareceived`, the remote recipient is able to handle the content of that message.
+
+This method returns the `id` of the message generated that can be used to deal with message acknowledgements.
+
+### sendAReadAcknowledgement(string: id, string: to)
+
+When receiving a new message, an acknowledgement can be send to the recipient to inform that the message has been received and read.
+
+Automatically, when receiving a message, **JSONGLE** sends a receipt acknowledgement of type `received` to the recipient.
+
+A receipt acknowledgement of type `read` can be send by using the method **sendAReadAcknowledgement()**.
+
+```js
+// When receiving a message
+jsongle.onmessagereceived = (content, from, id) => {
+  // Send the ack if the message is displayed to the user at this time
+  jsongle.sendAReadAcknowledgement(id, from);
+}
+```
 
 ### request(string: to, string: query, object: content) -> Promise
 
@@ -300,6 +320,4 @@ jsongle.onrequest((request, from) => {
     jsongle.answer(from, 'session-hello', {'uid':'jdoe@mycorp.com', 'dn': 'Jon Doe', }, request.transaction);
   }
 });
-
-
 ```

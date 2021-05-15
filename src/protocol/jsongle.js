@@ -123,6 +123,19 @@ export const CALL_ESTABLISHING_STATE = {
     GOT_REMOTE_CANDIDATE: "got-remote-candidate",
 };
 
+export const EVENTS_NAMESPACE = {
+    MESSAGE: "message",
+};
+
+export const MESSAGE_EVENTS = {
+    ACK: "ack",
+};
+
+export const ACK_TYPES = {
+    RECEIVED: "received",
+    READ: "read",
+};
+
 const stateMachine = {};
 stateMachine[CALL_STATE.FREE] = [STATE_ACTIONS.SEND, STATE_ACTIONS.IQ, STATE_ACTIONS.ERROR, STATE_ACTIONS.ACK, STATE_ACTIONS.EVENT, STATE_ACTIONS.PROPOSE];
 stateMachine[CALL_STATE.NEW] = [STATE_ACTIONS.TRY, STATE_ACTIONS.PROPOSE, STATE_ACTIONS.UNREACH, STATE_ACTIONS.SEND, STATE_ACTIONS.IQ, STATE_ACTIONS.ERROR, STATE_ACTIONS.ACK, STATE_ACTIONS.EVENT];
@@ -200,6 +213,19 @@ export const buildSimpleMessage = (action, to, description) => (
         to,
         jsongle: {
             action,
+            description,
+        },
+    }
+);
+
+export const buildAckMessage = (action, to, event, namespace, description) => (
+    {
+        id: generateNewId(),
+        to,
+        jsongle: {
+            action,
+            event,
+            namespace,
             description,
         },
     }

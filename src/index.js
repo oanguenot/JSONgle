@@ -22,6 +22,10 @@ import {
     JSONGLE_ACTIONS,
     buildSimpleMessage,
     buildQuery,
+    buildAckMessage,
+    MESSAGE_EVENTS,
+    EVENTS_NAMESPACE,
+    ACK_TYPES,
 } from "./protocol/jsongle";
 
 const REQUEST_TIMEOUT = 5000;
@@ -229,20 +233,30 @@ export default class JSONgle {
      * Send a custom message
      * @param {string} to The id of the recipient, a room or the server
      * @param {Object} content The message to send
+     * @return {string} The id of the message (used for message acknowledgment)
      */
     sendJSON(to, content) {
+        if (!to || !content) {
+            throw Error("Can't send a JSON message - bad parameters used");
+        }
         const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.CUSTOM, to, content);
         this._sessionHandler.send(true, jsongleMsg);
+        return jsongleMsg.id;
     }
 
     /**
      * Send a text message
      * @param {string} to The id of the recipient, a room or the server
      * @param {string} content The text message to send
+     * @return {string} The id of the message (used for message acknowledgment)
      */
      send(to, content) {
+        if (!to || !content) {
+            throw Error("Can't send a text message - bad parameters used");
+        }
         const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.TEXT, to, { content });
         this._sessionHandler.send(true, jsongleMsg);
+        return jsongleMsg.id;
     }
 
     /**
@@ -254,6 +268,10 @@ export default class JSONgle {
      */
     async request(to, query, content, transaction = generateNewId()) {
         return new Promise((resolve, reject) => {
+            if (!to || !query || !content) {
+                reject(new Error("Can't send a request - bad parameters used"));
+            }
+
             let id;
 
             const timeout = new Promise((_, rej) => {
@@ -288,15 +306,20 @@ export default class JSONgle {
     }
 
     /**
-     * Answer to a query (set or get) from a recipient, a room or the server
+     * Answer to a query (set or get) from a recipient, a room or the server.
      * @param {string} to The id of the recipient, room or server
      * @param {string} query The query to execute (eg: session-register)
      * @param {object} content The JSON content
-     * @param {*} transaction A transaction id (a default one is generated if not set)
+     * @param {string} transaction A transaction id (a default one is generated if not set)
+     * @return A Promise
      */
      answer(to, query, content, transaction) {
         return new Promise((resolve, reject) => {
             let id;
+
+            if (!to || !query || !content || !transaction) {
+                reject(new Error("Can't answer the query - bad parameters used"));
+            }
 
             const timeout = new Promise((_, rej) => {
                 id = setTimeout(() => {
@@ -325,125 +348,191 @@ export default class JSONgle {
     }
 
     /**
-     * Register to event 'oncallstatechanged'
-     * Fired when the state of the call has changed
+     * Read acknowledgement of a message received
+     * @param {string} id The id of the message to ack
+     * @param {string} to The issuer of that message
+     */
+    sendAReadAcknowledgement(id, to) {
+        if (!id || !to) {
+            throw Error("Can't mark a message a read - bad parameters used");
+        }
+        const jsongleAckEvent = buildAckMessage(JSONGLE_ACTIONS.EVENT, to, MESSAGE_EVENTS.ACK, EVENTS_NAMESPACE.MESSAGE, { acknowledged: new Date().toJSON(), mid: id, type: ACK_TYPES.READ });
+        this._sessionHandler.send(true, jsongleAckEvent);
+    }
+
+    /**
+     * Register a callback to the event 'oncallstatechanged'
+     * @param {fct} callback Register this function to the event. Unregister is callback is null
      */
     set oncallstatechanged(callback) {
+        if (!callback) {
+            this._sessionHandler.unregisterCallback("oncallstatechanged");
+        }
         this._sessionHandler.registerCallback("oncallstatechanged", callback);
     }
 
     /**
-     * Register to event 'oncall'
-     * Fired when a call has been initiated or received
+     * Register a callback to the event 'oncall'
+     * @param {fct} callback Register this function to the event. Unregister is callback is null
      */
     set oncall(callback) {
+        if (!callback) {
+            this._sessionHandler.unregisterCallback("oncall");
+        }
         this._sessionHandler.registerCallback("oncall", callback);
     }
 
     /**
-     * Register to event 'oncallended'
-     * Fired when the current call has been ended (aborded, declined, retracted, disconnected)
+     * Register a callback to the event 'oncallended'
+     * @param {fct} callback Register this function to the event. Unregister is callback is null
      */
     set oncallended(callback) {
+        if (!callback) {
+            this._sessionHandler.unregisterCallback("oncallended");
+        }
         this._sessionHandler.registerCallback("oncallended", callback);
     }
 
     /**
-     * Register to event 'onofferneeded'
-     * Fired when the current call needs an offer to continue (from the PeerConnection)
+     * Register a callback to the event 'onofferneeded'
+     * @param {fct} callback Register this function to the event. Unregister is callback is null
      */
     set onofferneeded(callback) {
+        if (!callback) {
+            this._sessionHandler.unregisterCallback("onofferneeded");
+        }
         this._sessionHandler.registerCallback("onofferneeded", callback);
     }
 
     /**
-     * Register to event 'onofferreceived'
-     * Fired when the current call needs an answer to continue (from the PeerConnection)
+     * Register a callback to the event 'onofferreceived'
+     * @param {fct} callback Register this function to the event. Unregister is callback is null
      */
     set onofferreceived(callback) {
+        if (!callback) {
+            this._sessionHandler.unregisterCallback("onofferreceived");
+        }
         this._sessionHandler.registerCallback("onofferreceived", callback);
     }
 
     /**
-     * Register to event 'oncandidatereceived'
-     * Fired when the current call needs to give the received ICE Candidate (to the PeerConnection)
+     * Register a callback to the event 'oncandidatereceived'
+     * @param {fct} callback Register this function to the event. Unregister is callback is null
      */
     set oncandidatereceived(callback) {
+        if (!callback) {
+            this._sessionHandler.unregisterCallback("oncandidatereceived");
+        }
         this._sessionHandler.registerCallback("oncandidatereceived", callback);
     }
 
     /**
-     * Register to event 'onticket'
-     * Fired when the call is ended
+     * Register a callback to the event 'onticket'
+     * @param {fct} callback Register this function to the event. Unregister is callback is null
      */
     set onticket(callback) {
+        if (!callback) {
+            this._sessionHandler.unregisterCallback("onticket");
+        }
         this._sessionHandler.registerCallback("onticket", callback);
     }
 
     /**
-     * Register to event 'oncallmuted'
-     * Fired when the call is muted on the remote side
+     * Register a callback to the event 'oncallmuted'
+     * @param {fct} callback Register this function to the event. Unregister is callback is null
      */
      set oncallmuted(callback) {
+        if (!callback) {
+            this._sessionHandler.unregisterCallback("oncallmuted");
+        }
         this._sessionHandler.registerCallback("oncallmuted", callback);
     }
 
-    /**
-     * Register to event 'oncallunmuted'
-     * Fired when the call is unmuted on the remote side
+   /**
+     * Register a callback to the event 'oncallunmuted'
+     * @param {fct} callback Register this function to the event. Unregister is callback is null
      */
      set oncallunmuted(callback) {
+        if (!callback) {
+            this._sessionHandler.unregisterCallback("oncallunmuted");
+        }
         this._sessionHandler.registerCallback("oncallunmuted", callback);
     }
 
     /**
-     * Register to event 'onlocalcallmuted'
-     * Fired when the call is muted on the local side
+     * Register a callback to the event 'onlocalcallmuted'
+     * @param {fct} callback Register this function to the event. Unregister is callback is null
      */
     set onlocalcallmuted(callback) {
+        if (!callback) {
+            this._sessionHandler.unregisterCallback("onlocalcallmuted");
+        }
         this._sessionHandler.registerCallback("onlocalcallmuted", callback);
     }
 
     /**
-     * Register to event 'onlocalcallunmuted'
-     * Fired when the call is unmuted on the local side
+     * Register a callback to the event 'onlocalcallunmuted'
+     * @param {fct} callback Register this function to the event. Unregister is callback is null
      */
     set onlocalcallunmuted(callback) {
+        if (!callback) {
+            this._sessionHandler.unregisterCallback("onlocalcallunmuted");
+        }
         this._sessionHandler.registerCallback("onlocalcallunmuted", callback);
     }
 
     /**
-     * Register to event 'ondatareceived'
+     * Register a callback to the event 'ondatareceived'
+     * @param {fct} callback Register this function to the event. Unregister is callback is null
      */
     set ondatareceived(callback) {
+        if (!callback) {
+            this._sessionHandler.unregisterCallback("ondatareceived");
+        }
         this._sessionHandler.registerCallback("ondatareceived", callback);
     }
 
-    /**
-     * Register to event 'onmessagereceived'
+   /**
+     * Register a callback to the event 'onmessagereceived'
+     * @param {fct} callback Register this function to the event. Unregister is callback is null
      */
      set onmessagereceived(callback) {
+        if (!callback) {
+            this._sessionHandler.unregisterCallback("onmessagereceived");
+        }
         this._sessionHandler.registerCallback("onmessagereceived", callback);
     }
 
     /**
-     * Register to event 'onerror'
+     * Register a callback to the event 'onerror'
+     * @param {fct} callback Register this function to the event. Unregister is callback is null
      */
     set onerror(callback) {
+        if (!callback) {
+            this._sessionHandler.unregisterCallback("onerror");
+        }
         this._sessionHandler.registerCallback("onerror", callback);
     }
 
     /**
-     * Register to event 'oniq'
+     * Register a callback to the event 'onrequest'
+     * @param {fct} callback Register this function to the event. Unregister is callback is null
      */
     set onrequest(callback) {
+        if (!callback) {
+            this._sessionHandler.unregisterCallback("onrequest");
+        }
         this._sessionHandler.registerCallback("onrequest", callback);
     }
 
     /**
-     * Register to event 'onevent'
+     * Register a callback to the event 'onevent'
+     * @param {fct} callback Register this function to the event. Unregister is callback is null
      */
      set onevent(callback) {
+        if (!callback) {
+            this._sessionHandler.unregisterCallback("onevent");
+        }
         this._sessionHandler.registerCallback("onevent", callback);
     }
 
