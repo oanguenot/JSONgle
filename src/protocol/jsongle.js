@@ -129,11 +129,17 @@ export const EVENTS_NAMESPACE = {
 
 export const MESSAGE_EVENTS = {
     ACK: "ack",
+    TYPING: "typing",
 };
 
 export const ACK_TYPES = {
     RECEIVED: "received",
     READ: "read",
+};
+
+export const TYPING_STATES = {
+    COMPOSING: "composing",
+    ACTIVE: "active",
 };
 
 const stateMachine = {};
@@ -218,7 +224,7 @@ export const buildSimpleMessage = (action, to, description) => (
     }
 );
 
-export const buildAckMessage = (action, to, event, namespace, description) => (
+export const buildEvent = (action, to, event, namespace, description) => (
     {
         id: generateNewId(),
         to,

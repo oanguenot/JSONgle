@@ -22,10 +22,11 @@ import {
     JSONGLE_ACTIONS,
     buildSimpleMessage,
     buildQuery,
-    buildAckMessage,
+    buildEvent,
     MESSAGE_EVENTS,
     EVENTS_NAMESPACE,
     ACK_TYPES,
+    TYPING_STATES,
 } from "./protocol/jsongle";
 
 const REQUEST_TIMEOUT = 5000;
@@ -356,8 +357,21 @@ export default class JSONgle {
         if (!id || !to) {
             throw Error("Can't mark a message a read - bad parameters used");
         }
-        const jsongleAckEvent = buildAckMessage(JSONGLE_ACTIONS.EVENT, to, MESSAGE_EVENTS.ACK, EVENTS_NAMESPACE.MESSAGE, { acknowledged: new Date().toJSON(), mid: id, type: ACK_TYPES.READ });
+        const jsongleAckEvent = buildEvent(JSONGLE_ACTIONS.EVENT, to, MESSAGE_EVENTS.ACK, EVENTS_NAMESPACE.MESSAGE, { acknowledged: new Date().toJSON(), mid: id, type: ACK_TYPES.READ });
         this._sessionHandler.send(true, jsongleAckEvent);
+    }
+
+    /**
+     * Send the is typing state
+     * @param {boolean} state True when typing a message. False elsewhere
+     * @param {string} to The issuer of that message
+     */
+     isTyping(state, to) {
+        if (!to) {
+            throw Error("Can't send the typing state - bad parameters used");
+        }
+        const isTypingEvent = buildEvent(JSONGLE_ACTIONS.EVENT, to, MESSAGE_EVENTS.TYPING, EVENTS_NAMESPACE.MESSAGE, { state: state ? TYPING_STATES.COMPOSING : TYPING_STATES.ACTIVE, updated: new Date().toJSON() });
+        this._sessionHandler.send(true, isTypingEvent);
     }
 
     /**

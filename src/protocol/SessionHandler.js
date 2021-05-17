@@ -10,7 +10,7 @@ import {
     IQ_QUERY,
     ACK_TYPES,
     MESSAGE_EVENTS,
-    buildAckMessage,
+    buildEvent,
     EVENTS_NAMESPACE,
 } from "./jsongle";
 import Transport from "../transport/Transport";
@@ -423,7 +423,7 @@ export default class SessionHandler {
         } else {
             debug(moduleName, "received msg");
             // acknowledge the message received
-            const ackEvent = buildAckMessage(JSONGLE_ACTIONS.EVENT, msg.from, MESSAGE_EVENTS.ACK, EVENTS_NAMESPACE.MESSAGE, { acknowledged: new Date().toJSON(), mid: msg.id, type: ACK_TYPES.RECEIVED });
+            const ackEvent = buildEvent(JSONGLE_ACTIONS.EVENT, msg.from, MESSAGE_EVENTS.ACK, EVENTS_NAMESPACE.MESSAGE, { acknowledged: new Date().toJSON(), mid: msg.id, type: ACK_TYPES.RECEIVED });
             this._transport.sendMessage(ackEvent);
 
             // Fire the event

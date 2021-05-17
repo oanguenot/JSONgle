@@ -275,6 +275,12 @@ jsongle.onmessagereceived = (content, from, id) => {
 }
 ```
 
+### isTyping(boolean: state, string: to)
+
+Any recipients of a room can be informed when someone is typing a message to streamline the conversation. When the user is writing a message, the method **isTyping()** can be called with a state equals to `true` to inform the recipients that a message is in progress. When the user is no more writing (eg: text content erased from the input field, long paused, etc...), the method **isTyping()** can be called with a state equals to `false` in the same way.
+
+Note: Receiving a new message from someone should reset the state of the isTyping automatically to `false` without having to send that message.
+
 ### request(string: to, string: query, object: content) -> Promise
 
 At anytime, a request can be send to the server to execute an action (eg: registering to a room). For that, JSONgle offers the `request` method that is a **Promise**.

@@ -449,3 +449,21 @@ The **session-event** message is sent by the server to inform about actions done
     }
 }
 ```
+
+## session-text
+
+The **session-text** message is sent by a user when exchanging a text message and relayed by the server.
+
+```json
+{
+    "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
+    "from": "858888d2-8e69-4910-9893-b979ddbc8c15",
+    "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
+    "jsongle": {
+        "action": "session-text",
+        "description": {
+          "content": "the text message"
+        }
+    }
+}
+```
