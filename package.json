@@ -1,13 +1,13 @@
 {
     "name": "jsongle",
-    "version": "2.3.0",
+    "version": "2.3.1",
     "description": "JavaScript library for handling WebRTC signaling protocol based on JSON and Jingle",
     "main": "dist/JSONgle.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "prebuild": "rimraf dist",
-        "build:dev": "webpack -w --output-filename JSONgle.js",
-        "build:prod": "webpack --output-filename JSONgle.js -p"
+        "build:dev": "webpack --config webpack.config-dev.js -w",
+        "build:prod": "webpack --config webpack.config-prod.js -w"
     },
     "files": [
         "dist",
@@ -26,8 +26,8 @@
         "eslint-config-airbnb-base": "14.2.0",
         "eslint-plugin-import": "2.22.0",
         "rimraf": "3.0.2",
-        "webpack": "4.44.1",
-        "webpack-cli": "3.3.12"
+        "webpack": "5.37.1",
+        "webpack-cli": "4.7"
     },
     "babel": {
         "presets": [
