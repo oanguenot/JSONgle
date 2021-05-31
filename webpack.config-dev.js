@@ -11,6 +11,7 @@ const ESLintPlugin = require('eslint-webpack-plugin');
     library: {
       name: 'JSONgle',
       type: 'umd',
+      export: 'default',
     },
    },
    plugins: [new ESLintPlugin()],

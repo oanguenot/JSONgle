@@ -87,7 +87,22 @@ const transportCfg = {
 Once the configurations are ok, initialize **JSONgle**
 
 ```js
+// If using a bundler such as React or Angular
 import JSONGle from "jsongle";
+
+const jsongle = new JSONGle({
+    transport: transportCfg,
+});
+```
+
+If you are using **Vanilla** JavaScript without bundling your application (This is the case for example if you are not using a transpiler such as using React/Babel or Angular/TypeScript), you have to load the library differently:
+
+- Copy **JSONgle.js** from **node_modules/jsongle/dist/** to your **public** directory or a directory served.
+
+- Import using the following
+
+```js
+import "./JSONgle.js";  // Correct path to the library
 
 const jsongle = new JSONGle({
     transport: transportCfg,

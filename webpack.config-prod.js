@@ -9,6 +9,7 @@ const path = require('path');
     library: {
       name: 'JSONgle',
       type: 'umd',
+      export: 'default',
     },
    },
  };
