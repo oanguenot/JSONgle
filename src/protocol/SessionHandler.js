@@ -178,14 +178,12 @@ export default class SessionHandler {
 
         debug(moduleName, `propose call ${this._currentCall.id} to '${toId}' with '${media}'`);
 
+        this._callStore.dispatch({ type: CALL_ACTIONS.INITIATE_CALL, payload: {} });
+        const proposeMsg = this._currentCall.transitToPropose().jsongleze();
+        this._transport.sendMessage(proposeMsg);
+
         this.fireOnCall();
         this.fireOnCallStateChanged();
-
-        this._callStore.dispatch({ type: CALL_ACTIONS.INITIATE_CALL, payload: {} });
-
-        const proposeMsg = this._currentCall.transitToPropose().jsongleze();
-
-        this._transport.sendMessage(proposeMsg);
 
         return this;
     }
@@ -198,7 +196,6 @@ export default class SessionHandler {
         }
 
         this._currentCall.transitToProceeded(proceededAt);
-        this.fireOnCallStateChanged();
 
         if (shouldSendMessage) {
             const msg = this._currentCall.jsongleze();
@@ -206,6 +203,8 @@ export default class SessionHandler {
         } else {
             this.fireOnOfferNeeded();
         }
+
+        this.fireOnCallStateChanged();
     }
 
     decline(shouldSendMessage = true, declinedAt) {
@@ -216,14 +215,15 @@ export default class SessionHandler {
         }
 
         this._currentCall.transitToEndedWithReasonDeclined(declinedAt);
-        this.fireOnCallStateChanged();
-        this.fireOnCallEnded();
-        this.fireOnTicket();
 
         if (shouldSendMessage) {
             const msg = this._currentCall.jsongleze();
             this._transport.sendMessage(msg);
         }
+
+        this.fireOnCallStateChanged();
+        this.fireOnCallEnded();
+        this.fireOnTicket();
 
         this._callStore.dispatch({ type: CALL_ACTIONS.RELEASE_CALL, payload: {} });
         this._currentCall = null;
@@ -252,14 +252,14 @@ export default class SessionHandler {
             this._currentCall.transitToEndedWithReasonTerminated(ended);
         }
 
-        this.fireOnCallStateChanged();
-        this.fireOnCallEnded(shouldSendMessage);
-        this.fireOnTicket();
-
         if (shouldSendMessage) {
             const msg = this._currentCall.jsongleze();
             this._transport.sendMessage(msg);
         }
+
+        this.fireOnCallStateChanged();
+        this.fireOnCallEnded(shouldSendMessage);
+        this.fireOnTicket();
 
         this._callStore.dispatch({ type: CALL_ACTIONS.RELEASE_CALL, payload: {} });
         this._currentCall = null;
@@ -285,15 +285,17 @@ export default class SessionHandler {
 
     ringing(isNewCall = false, ringingAt) {
         debug(moduleName, `ring call '${this._currentCall.id}'`);
-        const ringingMsg = this._currentCall.transitToRinging(ringingAt).jsongleze();
 
-        this.fireOnCallStateChanged();
+        // Answer to recipient by a ringing event
+        const ringingMsg = this._currentCall.transitToRinging(ringingAt).jsongleze();
+        this._transport.sendMessage(ringingMsg);
 
         if (isNewCall) {
             this.fireOnCall();
             this._callStore.dispatch({ type: CALL_ACTIONS.ANSWER_CALL, payload: {} });
-            this._transport.sendMessage(ringingMsg);
         }
+
+        this.fireOnCallStateChanged();
     }
 
     offer(shouldSendMessage = true, offer, offeredAt) {
@@ -310,7 +312,6 @@ export default class SessionHandler {
         }
 
         this._currentCall.transitToOfferingWithReasonHaveOffer(offeredAt);
-        this.fireOnCallStateChanged();
 
         if (shouldSendMessage) {
             const offerMsg = this._currentCall.jsongleze();
@@ -318,6 +319,8 @@ export default class SessionHandler {
         } else {
             this.fireOnOfferReceived(offer);
         }
+
+        this.fireOnCallStateChanged();
     }
 
     answer(shouldSendMessage = true, offer, answeredAt) {
@@ -334,7 +337,6 @@ export default class SessionHandler {
         }
 
         this._currentCall.answer(answeredAt);
-        this.fireOnCallStateChanged();
 
         if (shouldSendMessage) {
             const answerMsg = this._currentCall.jsongleze();
@@ -342,6 +344,8 @@ export default class SessionHandler {
         } else {
             this.fireOnOfferReceived(offer);
         }
+
+        this.fireOnCallStateChanged();
     }
 
     offerCandidate(shouldSendMessage, candidate, establishedAt) {
@@ -352,7 +356,6 @@ export default class SessionHandler {
         }
 
         this._currentCall.establish(candidate, establishedAt, shouldSendMessage);
-        this.fireOnCallStateChanged();
 
         if (shouldSendMessage) {
             const offerMsg = this._currentCall.jsongleze();
@@ -360,6 +363,8 @@ export default class SessionHandler {
         } else {
             this.fireOnCandidateReceived(candidate);
         }
+
+        this.fireOnCallStateChanged();
     }
 
     active(shouldSendMessage, activedAt) {
@@ -370,12 +375,13 @@ export default class SessionHandler {
         }
 
         this._currentCall.transitToActive(activedAt, shouldSendMessage);
-        this.fireOnCallStateChanged();
 
         if (shouldSendMessage) {
             const activeMsg = this._currentCall.jsongleze();
             this._transport.sendMessage(activeMsg);
         }
+
+        this.fireOnCallStateChanged();
     }
 
     mute(shouldSendMessage, mutedAt) {
@@ -386,7 +392,6 @@ export default class SessionHandler {
         }
 
         this.currentCall.transitToMuted(mutedAt, shouldSendMessage);
-        this.fireOnCallStateChanged();
 
         if (shouldSendMessage) {
             const mutedMsg = this._currentCall.jsongleze(SESSION_INFO_REASON.MUTE);
@@ -395,6 +400,8 @@ export default class SessionHandler {
         } else {
             this.fireOnCallMuted();
         }
+
+        this.fireOnCallStateChanged();
     }
 
     unmute(shouldSendMessage, unmutedAt) {
@@ -405,7 +412,6 @@ export default class SessionHandler {
         }
 
         this.currentCall.transitToUnmuted(unmutedAt, shouldSendMessage);
-        this.fireOnCallStateChanged();
 
         if (shouldSendMessage) {
             const unmutedMsg = this._currentCall.jsongleze(SESSION_INFO_REASON.UNMUTE);
@@ -414,6 +420,8 @@ export default class SessionHandler {
         } else {
             this.fireOnCallUnmuted();
         }
+
+        this.fireOnCallStateChanged();
     }
 
     send(shouldSendMessage, msg) {
