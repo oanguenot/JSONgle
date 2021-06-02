@@ -180,6 +180,7 @@ export default class SessionHandler {
 
         this._callStore.dispatch({ type: CALL_ACTIONS.INITIATE_CALL, payload: {} });
         const proposeMsg = this._currentCall.transitToPropose().jsongleze();
+        debug(moduleName, `call state moved to '${this._currentCall.state}' for call '${this._currentCall.id}'`);
         this._transport.sendMessage(proposeMsg);
 
         this.fireOnCall();
@@ -196,6 +197,7 @@ export default class SessionHandler {
         }
 
         this._currentCall.transitToProceeded(proceededAt);
+        debug(moduleName, `call state moved to '${this._currentCall.state}' for call '${this._currentCall.id}'`);
 
         if (shouldSendMessage) {
             const msg = this._currentCall.jsongleze();
@@ -203,7 +205,6 @@ export default class SessionHandler {
         } else {
             this.fireOnOfferNeeded();
         }
-
         this.fireOnCallStateChanged();
     }
 
@@ -215,6 +216,7 @@ export default class SessionHandler {
         }
 
         this._currentCall.transitToEndedWithReasonDeclined(declinedAt);
+        debug(moduleName, `call state moved to '${this._currentCall.state}' for call '${this._currentCall.id}'`);
 
         if (shouldSendMessage) {
             const msg = this._currentCall.jsongleze();
@@ -243,6 +245,7 @@ export default class SessionHandler {
                 debug(moduleName, `call ${this._currentCall.id} retracted`);
             }
             this._currentCall.transitToEndedWithReasonRetracted(ended);
+            debug(moduleName, `call state moved to '${this._currentCall.state}' for call '${this._currentCall.id}'`);
         } else {
             if (shouldSendMessage) {
                 debug(moduleName, `terminate call '${this._currentCall.id}'`);
@@ -250,6 +253,7 @@ export default class SessionHandler {
                 debug(moduleName, `call ${this._currentCall.id} terminated`);
             }
             this._currentCall.transitToEndedWithReasonTerminated(ended);
+            debug(moduleName, `call state moved to '${this._currentCall.state}' for call '${this._currentCall.id}'`);
         }
 
         if (shouldSendMessage) {
@@ -268,12 +272,14 @@ export default class SessionHandler {
     trying(triedAt) {
         debug(moduleName, `try call '${this._currentCall.id}'`);
         this._currentCall.transitToTrying(triedAt);
+        debug(moduleName, `call state moved to '${this._currentCall.state}' for call '${this._currentCall.id}'`);
         this.fireOnCallStateChanged();
     }
 
     abort(reason, abortedAt) {
         debug(moduleName, `abort call '${this._currentCall.id}'`);
         this._currentCall.transitToEndedWithReasonAborted(reason, abortedAt);
+        debug(moduleName, `call state moved to '${this._currentCall.state}' for call '${this._currentCall.id}'`);
 
         this.fireOnCallStateChanged();
         this.fireOnCallEnded();
@@ -284,18 +290,16 @@ export default class SessionHandler {
     }
 
     ringing(isNewCall = false, ringingAt) {
-        debug(moduleName, `ring call '${this._currentCall.id}'`);
-
-        // Answer to recipient by a ringing event
         const ringingMsg = this._currentCall.transitToRinging(ringingAt).jsongleze();
-        this._transport.sendMessage(ringingMsg);
-
+        debug(moduleName, `call state moved to '${this._currentCall.state}' for call '${this._currentCall.id}'`);
         if (isNewCall) {
-            this.fireOnCall();
+            debug(moduleName, `send ringing for call '${this._currentCall.id}'`);
+            this._transport.sendMessage(ringingMsg);
             this._callStore.dispatch({ type: CALL_ACTIONS.ANSWER_CALL, payload: {} });
+            this.fireOnCall();
+        } else {
+            debug(moduleName, `received ringing for call '${this._currentCall.id}'`);
         }
-
-        this.fireOnCallStateChanged();
     }
 
     offer(shouldSendMessage = true, offer, offeredAt) {
@@ -312,6 +316,7 @@ export default class SessionHandler {
         }
 
         this._currentCall.transitToOfferingWithReasonHaveOffer(offeredAt);
+        debug(moduleName, `call state moved to '${this._currentCall.state}' for call '${this._currentCall.id}'`);
 
         if (shouldSendMessage) {
             const offerMsg = this._currentCall.jsongleze();
@@ -375,6 +380,7 @@ export default class SessionHandler {
         }
 
         this._currentCall.transitToActive(activedAt, shouldSendMessage);
+        debug(moduleName, `call state moved to '${this._currentCall.state}' for call '${this._currentCall.id}'`);
 
         if (shouldSendMessage) {
             const activeMsg = this._currentCall.jsongleze();
@@ -392,6 +398,7 @@ export default class SessionHandler {
         }
 
         this.currentCall.transitToMuted(mutedAt, shouldSendMessage);
+        debug(moduleName, `call state moved to '${this._currentCall.state}' for call '${this._currentCall.id}'`);
 
         if (shouldSendMessage) {
             const mutedMsg = this._currentCall.jsongleze(SESSION_INFO_REASON.MUTE);
@@ -412,6 +419,7 @@ export default class SessionHandler {
         }
 
         this.currentCall.transitToUnmuted(unmutedAt, shouldSendMessage);
+        debug(moduleName, `call state moved to '${this._currentCall.state}' for call '${this._currentCall.id}'`);
 
         if (shouldSendMessage) {
             const unmutedMsg = this._currentCall.jsongleze(SESSION_INFO_REASON.UNMUTE);
@@ -502,89 +510,67 @@ export default class SessionHandler {
         return this._transport.from;
     }
 
-    fireOnCallStateChanged() {
-        if (this._callbacks.oncallstatechanged) {
-            this._callbacks.oncallstatechanged(this._currentCall);
+    desynchronize(fct, ...params) {
+        if (fct) {
+            fct(...params);
         }
+    }
+
+    fireOnCallStateChanged() {
+        this.desynchronize(this._callbacks.oncallstatechanged, this._currentCall.state);
     }
 
     fireOnCall() {
-        if (this._callbacks.oncall) {
-            this._callbacks.oncall(this._currentCall);
-        }
+        this.desynchronize(this._callbacks.oncall, this._currentCall);
     }
 
     fireOnCallEnded(isLocal) {
-        if (this._callbacks.oncallended) {
-            this._callbacks.oncallended(isLocal);
-        }
+        this.desynchronize(this._callbacks.oncallended, isLocal);
     }
 
     fireOnOfferNeeded() {
-        if (this._callbacks.onofferneeded) {
-            this._callbacks.onofferneeded(this._currentCall);
-        }
+        this.desynchronize(this._callbacks.onofferneeded, this._currentCall);
     }
 
     fireOnOfferReceived(offer) {
-        if (this._callbacks.onofferreceived) {
-            this._callbacks.onofferreceived(this._currentCall, offer, offer.type === "offer");
-        }
+        this.desynchronize(this._callbacks.onofferreceived, this._currentCall, offer, offer.type === "offer");
     }
 
     fireOnCandidateReceived(candidate) {
-        if (this._callbacks.oncandidatereceived) {
-            this._callbacks.oncandidatereceived(candidate);
-        }
+        this.desynchronize(this._callbacks.oncandidatereceived, candidate);
     }
 
     fireOnTicket() {
-        if (this._callbacks.onticket) {
-            const ticket = this._currentCall.ticketize();
-            this._callbacks.onticket(ticket);
-        }
+        const ticket = this._currentCall.ticketize();
+        this.desynchronize(this._callbacks.onticket, ticket);
     }
 
     fireOnCallLocalMuted() {
-        if (this._callbacks.onlocalcallmuted) {
-            this._callbacks.onlocalcallmuted(this._currentCall);
-        }
+        this.desynchronize(this._callbacks.onlocalcallmuted, this._currentCall);
     }
 
     fireOnCallLocalUnmuted() {
-        if (this._callbacks.onlocalcallunmuted) {
-            this._callbacks.onlocalcallunmuted(this._currentCall);
-        }
+        this.desynchronize(this._callbacks.onlocalcallunmuted, this._currentCall);
     }
 
     fireOnCallMuted() {
-        if (this._callbacks.oncallmuted) {
-            this._callbacks.oncallmuted(this._currentCall);
-        }
+        this.desynchronize(this._callbacks.oncallmuted, this._currentCall);
     }
 
     fireOnCallUnmuted() {
-        if (this._callbacks.oncallunmuted) {
-            this._callbacks.oncallunmuted(this._currentCall);
-        }
+        this.desynchronize(this._callbacks.oncallunmuted, this._currentCall);
     }
 
     fireOnDataMsgReceived(msg) {
-        if (this._callbacks.ondatareceived) {
-            this._callbacks.ondatareceived(msg.jsongle, msg.from, msg.id);
-        }
+        this.desynchronize(this._callbacks.ondatareceived, msg.jsongle, msg.from, msg.id);
     }
 
     fireOnMsgReceived(msg) {
-        if (this._callbacks.onmessagereceived) {
-            this._callbacks.onmessagereceived(msg.jsongle, msg.from, msg.id);
-        }
+        this.desychronize(this._callbacks.onmessagereceived, msg.jsongle, msg.from, msg.id);
     }
 
     fireOnErrorReceived(msg) {
-        if (this._callbacks.onerror) {
-            this._callbacks.onerror(msg.jsongle, msg.from);
-        }
+        this.desynchronize(this._callbacks.onerror, msg.jsongle, msg.from);
     }
 
     fireAnswer(msg) {
@@ -597,15 +583,11 @@ export default class SessionHandler {
     }
 
     fireRequestReceived(msg) {
-        if (this._callbacks.onrequest) {
-            this._callbacks.onrequest(msg.jsongle, msg.from);
-        }
+        this.desynchronize(this._callbacks.onrequest, msg.jsongle, msg.from);
     }
 
     fireOnEvent(msg) {
-        if (this._callbacks.onevent) {
-            this._callbacks.onevent(msg.jsongle, msg.from);
-        }
+        this.desynchronize(this._callbacks.onevent, msg.jsongle, msg.from);
     }
 
     get currentCall() {
