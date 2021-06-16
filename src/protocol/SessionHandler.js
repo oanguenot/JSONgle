@@ -368,8 +368,6 @@ export default class SessionHandler {
         } else {
             this.fireOnCandidateReceived(candidate);
         }
-
-        this.fireOnCallStateChanged();
     }
 
     active(shouldSendMessage, activedAt) {
