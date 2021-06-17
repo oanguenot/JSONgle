@@ -508,67 +508,67 @@ export default class SessionHandler {
         return this._transport.from;
     }
 
-    desynchronize(fct, ...params) {
+    fireWithParams(fct, ...params) {
         if (fct) {
             fct(...params);
         }
     }
 
     fireOnCallStateChanged() {
-        this.desynchronize(this._callbacks.oncallstatechanged, this._currentCall.state);
+        this.fireWithParams(this._callbacks.oncallstatechanged, this._currentCall.state);
     }
 
     fireOnCall() {
-        this.desynchronize(this._callbacks.oncall, this._currentCall);
+        this.fireWithParams(this._callbacks.oncall, this._currentCall);
     }
 
     fireOnCallEnded(isLocal) {
-        this.desynchronize(this._callbacks.oncallended, isLocal);
+        this.fireWithParams(this._callbacks.oncallended, isLocal);
     }
 
     fireOnOfferNeeded() {
-        this.desynchronize(this._callbacks.onofferneeded, this._currentCall);
+        this.fireWithParams(this._callbacks.onofferneeded, this._currentCall);
     }
 
     fireOnOfferReceived(offer) {
-        this.desynchronize(this._callbacks.onofferreceived, this._currentCall, offer, offer.type === "offer");
+        this.fireWithParams(this._callbacks.onofferreceived, this._currentCall, offer, offer.type === "offer");
     }
 
     fireOnCandidateReceived(candidate) {
-        this.desynchronize(this._callbacks.oncandidatereceived, candidate);
+        this.fireWithParams(this._callbacks.oncandidatereceived, candidate);
     }
 
     fireOnTicket() {
         const ticket = this._currentCall.ticketize();
-        this.desynchronize(this._callbacks.onticket, ticket);
+        this.fireWithParams(this._callbacks.onticket, ticket);
     }
 
     fireOnCallLocalMuted() {
-        this.desynchronize(this._callbacks.onlocalcallmuted, this._currentCall);
+        this.fireWithParams(this._callbacks.onlocalcallmuted, this._currentCall);
     }
 
     fireOnCallLocalUnmuted() {
-        this.desynchronize(this._callbacks.onlocalcallunmuted, this._currentCall);
+        this.fireWithParams(this._callbacks.onlocalcallunmuted, this._currentCall);
     }
 
     fireOnCallMuted() {
-        this.desynchronize(this._callbacks.oncallmuted, this._currentCall);
+        this.fireWithParams(this._callbacks.oncallmuted, this._currentCall);
     }
 
     fireOnCallUnmuted() {
-        this.desynchronize(this._callbacks.oncallunmuted, this._currentCall);
+        this.fireWithParams(this._callbacks.oncallunmuted, this._currentCall);
     }
 
     fireOnDataMsgReceived(msg) {
-        this.desynchronize(this._callbacks.ondatareceived, msg.jsongle, msg.from, msg.id);
+        this.fireWithParams(this._callbacks.ondatareceived, msg.jsongle, msg.from, msg.id);
     }
 
     fireOnMsgReceived(msg) {
-        this.desychronize(this._callbacks.onmessagereceived, msg.jsongle, msg.from, msg.id);
+        this.fireWithParams(this._callbacks.onmessagereceived, msg.jsongle, msg.from, msg.id);
     }
 
     fireOnErrorReceived(msg) {
-        this.desynchronize(this._callbacks.onerror, msg.jsongle, msg.from);
+        this.fireWithParams(this._callbacks.onerror, msg.jsongle, msg.from);
     }
 
     fireAnswer(msg) {
@@ -581,11 +581,11 @@ export default class SessionHandler {
     }
 
     fireRequestReceived(msg) {
-        this.desynchronize(this._callbacks.onrequest, msg.jsongle, msg.from);
+        this.fireWithParams(this._callbacks.onrequest, msg.jsongle, msg.from);
     }
 
     fireOnEvent(msg) {
-        this.desynchronize(this._callbacks.onevent, msg.jsongle, msg.from);
+        this.fireWithParams(this._callbacks.onevent, msg.jsongle, msg.from);
     }
 
     get currentCall() {

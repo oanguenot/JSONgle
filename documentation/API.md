@@ -255,7 +255,7 @@ jsongle.onmessagereceived = (content, from, id) => {
 }
 ```
 
-By listening to the event `ondatareceived`, the remote recipient is able to handle the content of that message.
+By listening to the event `onmessagereceived`, the remote recipient is able to handle the content of that message.
 
 This method returns the `id` of the message generated that can be used to deal with message acknowledgements.
 
