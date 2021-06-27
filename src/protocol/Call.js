@@ -10,7 +10,7 @@ import {
     SESSION_INFO_REASON,
 } from "./jsongle";
 
-const getActionFromStateAndStep = (state, endedReason, offeringState, establishingState) => {
+const getActionFromStateAndStep = (state, endedReason, offeringState, establishingState, forced) => {
     switch (state) {
         case CALL_STATE.NEW:
             return JSONGLE_ACTIONS.PROPOSE;
@@ -33,14 +33,14 @@ const getActionFromStateAndStep = (state, endedReason, offeringState, establishi
         case CALL_STATE.PROCEEDED:
             return JSONGLE_ACTIONS.PROCEED;
         case CALL_STATE.OFFERING:
-            if (establishingState === CALL_ESTABLISHING_STATE.GOT_LOCAL_CANDIDATE) {
+            if (forced === "transport") {
                 return JSONGLE_ACTIONS.TRANSPORT;
             }
-            if (offeringState === CALL_OFFERING_STATE.HAVE_OFFER) {
-                return JSONGLE_ACTIONS.INITIATE;
-            }
-            if (offeringState === CALL_OFFERING_STATE.HAVE_ANSWER) {
+            if (forced === "answer") {
                 return JSONGLE_ACTIONS.ACCEPT;
+            }
+            if (forced === "offer") {
+                return JSONGLE_ACTIONS.INITIATE;
             }
             return JSONGLE_ACTIONS.NOOP;
         case CALL_STATE.ACTIVE:
@@ -485,11 +485,11 @@ export default class Call {
 
     answer(answeredAt) {
         this._offered = answeredAt;
-        if (this._offeringState === CALL_OFFERING_STATE.HAVE_ANSWER) {
+        // if (this._offeringState === CALL_OFFERING_STATE.HAVE_ANSWER) {
             this._offeringState = CALL_OFFERING_STATE.HAVE_BOTH;
-        } else {
-            this._offeringState = CALL_OFFERING_STATE.HAVE_ANSWER;
-        }
+        // } else {
+        //    this._offeringState = CALL_OFFERING_STATE.HAVE_ANSWER;
+        // }
 
         return this;
     }
@@ -585,12 +585,15 @@ export default class Call {
     }
 
     jsongleze(inheritedAction = null) {
+        const forced = (inheritedAction === "answer" || inheritedAction === "offer" || inheritedAction === "transport") ? inheritedAction : null;
+
         const action = getActionFromStateAndStep(
             this._state,
             this._endedReason,
             this._offeringState,
             this._establishingState,
-        );
+            forced,
+            );
         const reason = getReasonFromActionAndState(action, this._state, inheritedAction);
         const description = this.getDescriptionFromAction(action, inheritedAction);
 

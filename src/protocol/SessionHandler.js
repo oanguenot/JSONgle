@@ -316,10 +316,10 @@ export default class SessionHandler {
         }
 
         this._currentCall.transitToOfferingWithReasonHaveOffer(offeredAt);
-        debug(moduleName, `call state moved to '${this._currentCall.state}' for call '${this._currentCall.id}'`);
+        debug(moduleName, `call state moved to '${this._currentCall.state}' | offer state moved to ${this._currentCall.offeringState} for call '${this._currentCall.id}'`);
 
         if (shouldSendMessage) {
-            const offerMsg = this._currentCall.jsongleze();
+            const offerMsg = this._currentCall.jsongleze("offer");
             this._transport.sendMessage(offerMsg);
         } else {
             this.fireOnOfferReceived(offer);
@@ -341,10 +341,18 @@ export default class SessionHandler {
             this._currentCall.setRemoteOffer(offer);
         }
 
-        this._currentCall.answer(answeredAt);
+        if (this._currentCall.localOffer && this._currentCall.remoteOffer) {
+            this._currentCall.transitToOfferingWithReasonHaveBoth(answeredAt);
+        } else if (this._currentCall.localOffer) {
+            this._currentCall.transitToOfferingWithReasonHaveOffer(answeredAt);
+        } else {
+            this._currentCall.transitToOfferingWithReasonHaveAnswer(answeredAt);
+        }
+
+        debug(moduleName, `call state moved to '${this._currentCall.state}' | offer state moved to ${this._currentCall.offeringState} for call '${this._currentCall.id}'`);
 
         if (shouldSendMessage) {
-            const answerMsg = this._currentCall.jsongleze();
+            const answerMsg = this._currentCall.jsongleze("answer");
             this._transport.sendMessage(answerMsg);
         } else {
             this.fireOnOfferReceived(offer);
@@ -363,7 +371,7 @@ export default class SessionHandler {
         this._currentCall.establish(candidate, establishedAt, shouldSendMessage);
 
         if (shouldSendMessage) {
-            const offerMsg = this._currentCall.jsongleze();
+            const offerMsg = this._currentCall.jsongleze("transport");
             this._transport.sendMessage(offerMsg);
         } else {
             this.fireOnCandidateReceived(candidate);
