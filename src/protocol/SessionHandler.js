@@ -119,11 +119,11 @@ export default class SessionHandler {
             };
 
             routing[STATE_ACTIONS.MUTE] = () => {
-                this.mute(false, new Date(message.jsongle.description.muted));
+                this.mute(false, new Date(message.jsongle.description.muted), message.jsongle.description.media);
             };
 
             routing[STATE_ACTIONS.UNMUTE] = () => {
-                this.unmute(false, new Date(message.jsongle.description.unmuted));
+                this.unmute(false, new Date(message.jsongle.description.unmuted), message.jsongle.description.media);
             };
 
             routing[STATE_ACTIONS.SEND] = () => {
@@ -396,15 +396,19 @@ export default class SessionHandler {
         this.fireOnCallStateChanged();
     }
 
-    mute(shouldSendMessage, mutedAt) {
+    mute(shouldSendMessage, mutedAt, media) {
         if (shouldSendMessage) {
-            debug(moduleName, `send muted for call '${this._currentCall.id}'`);
+            debug(moduleName, `send muted ${media} for call '${this._currentCall.id}'`);
         } else {
-            debug(moduleName, `received muted for call '${this._currentCall.id}'`);
+            debug(moduleName, `received muted ${media} for call '${this._currentCall.id}'`);
         }
 
-        this.currentCall.transitToMuted(mutedAt, shouldSendMessage);
-        debug(moduleName, `call state moved to '${this._currentCall.state}' for call '${this._currentCall.id}'`);
+        this.currentCall.transitToMuted(mutedAt, shouldSendMessage, media);
+        if (shouldSendMessage) {
+            debug(moduleName, `call state moved to '${this._currentCall.state} | muted: ${this._currentCall.mutedMedia}' for call '${this._currentCall.id}'`);
+        } else {
+            debug(moduleName, `call state moved to '${this._currentCall.state} | muted: ${this._currentCall.remoteMutedMedia}' for call '${this._currentCall.id}'`);
+        }
 
         if (shouldSendMessage) {
             const mutedMsg = this._currentCall.jsongleze(SESSION_INFO_REASON.MUTE);
@@ -417,15 +421,19 @@ export default class SessionHandler {
         this.fireOnCallStateChanged();
     }
 
-    unmute(shouldSendMessage, unmutedAt) {
+    unmute(shouldSendMessage, unmutedAt, media) {
         if (shouldSendMessage) {
             debug(moduleName, `send unmuted for call '${this._currentCall.id}'`);
         } else {
             debug(moduleName, `received unmuted for call '${this._currentCall.id}'`);
         }
 
-        this.currentCall.transitToUnmuted(unmutedAt, shouldSendMessage);
-        debug(moduleName, `call state moved to '${this._currentCall.state}' for call '${this._currentCall.id}'`);
+        this.currentCall.transitToUnmuted(unmutedAt, shouldSendMessage, media);
+        if (shouldSendMessage) {
+            debug(moduleName, `call state moved to '${this._currentCall.state} | muted: ${this._currentCall.mutedMedia}' for call '${this._currentCall.id}'`);
+        } else {
+            debug(moduleName, `call state moved to '${this._currentCall.state} | muted: ${this._currentCall.remoteMutedMedia}' for call '${this._currentCall.id}'`);
+        }
 
         if (shouldSendMessage) {
             const unmutedMsg = this._currentCall.jsongleze(SESSION_INFO_REASON.UNMUTE);

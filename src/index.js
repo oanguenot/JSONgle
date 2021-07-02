@@ -27,6 +27,7 @@ import {
     EVENTS_NAMESPACE,
     ACK_TYPES,
     TYPING_STATES,
+    MUTED_MEDIA,
 } from "./protocol/jsongle";
 
 const REQUEST_TIMEOUT = 5000;
@@ -153,33 +154,87 @@ export default class JSONgle {
     }
 
     /**
-     * Mute the audio leg of a call
+     * Mute audio and video
      * Use to inform the other party that the audio media is not sent anymore
      */
-    mute() {
+     mute() {
         if (!this.currentCall) {
             throw Error("Can't mute the call - not in a call");
         }
         if (this.currentCall.muted) {
-            throw Error("Can't mute the call - call is already muted");
+            throw Error("Can't mute the call - call is already muted for audio or video or all");
         }
+        this._sessionHandler.mute(true, new Date(), MUTED_MEDIA.ALL);
+    }
 
-        this._sessionHandler.mute(true, new Date());
+    /**
+     * Mute the audio leg of a call
+     * Use to inform the other party that the audio media is not sent anymore
+     */
+    muteAudio() {
+        if (!this.currentCall) {
+            throw Error("Can't mute the call - not in a call");
+        }
+        if (this.currentCall.muted && (this.currentCall.mutedMedia === MUTED_MEDIA.AUDIO || this.currentCall.mutedMedia === MUTED_MEDIA.ALL)) {
+            throw Error("Can't mute the call - call is already muted for audio");
+        }
+        this._sessionHandler.mute(true, new Date(), MUTED_MEDIA.AUDIO);
+    }
+
+    /**
+     * Mute the video leg of a call
+     * Use to inform the other party that the audio media is not sent anymore
+     */
+     muteVideo() {
+        if (!this.currentCall) {
+            throw Error("Can't mute the call - not in a call");
+        }
+        if (this.currentCall.muted && (this.currentCall.mutedMedia === MUTED_MEDIA.VIDEO || this.currentCall.mutedMedia === MUTED_MEDIA.ALL)) {
+            throw Error("Can't mute the call - call is already muted for video");
+        }
+        this._sessionHandler.mute(true, new Date(), MUTED_MEDIA.VIDEO);
+    }
+
+    /**
+     * UnMute audio and video
+     * Use to inform the other party that the audio media is not sent anymore
+     */
+     unmute() {
+        if (!this.currentCall) {
+            throw Error("Can't unmute the call - not in a call");
+        }
+        if (!this.currentCall.muted || (this.currentCall.muted && this.currentCall.mutedMedia !== MUTED_MEDIA.ALL)) {
+            throw Error("Can't unmute the call - call is not muted or not muted all");
+        }
+        this._sessionHandler.unmute(true, new Date(), MUTED_MEDIA.ALL);
     }
 
     /**
      * Unmute the audio leg of a call
      * Use to inform the other party that the audio media is sent again
      */
-    unmute() {
+    unmuteAudio() {
         if (!this.currentCall) {
             throw Error("Can't unmute the call - not in a call");
         }
-        if (!this.currentCall.muted) {
-            throw Error("Can't unmute the call - call is not muted");
+        if (!this.currentCall.muted || (this.currentCall.mutedMedia === MUTED_MEDIA.VIDEO || this.currentCall.mutedMedia === MUTED_MEDIA.NONE)) {
+            throw Error("Can't unmute the call - call is not muted for audio");
         }
+        this._sessionHandler.unmute(true, new Date(), MUTED_MEDIA.AUDIO);
+    }
 
-        this._sessionHandler.unmute(true, new Date());
+    /**
+     * Unmute the video leg of a call
+     * Use to inform the other party that the audio media is sent again
+     */
+     unmuteVideo() {
+        if (!this.currentCall) {
+            throw Error("Can't unmute the call - not in a call");
+        }
+        if (!this.currentCall.muted || (this.currentCall.mutedMedia === MUTED_MEDIA.AUDIO || this.currentCall.mutedMedia === MUTED_MEDIA.NONE)) {
+            throw Error("Can't unmute the call - call is not muted for video");
+        }
+        this._sessionHandler.unmute(true, new Date(), MUTED_MEDIA.VIDEO);
     }
 
     /**

@@ -165,7 +165,7 @@ In the same way, your application will receive a `session-info` with a `reason=a
 
 ### mute() & unmute()
 
-When the application mute or unmute the media, a `session-info`message with a `reason=mute` or `reason=unmute` can be sent to your recipient in order to inform him of the nature of the change.
+When the application wants to mute or unmute the audio and video, a `session-info`message with a `reason=mute` or `reason=unmute` can be sent to your recipient in order to inform him of the nature of the change.
 
 ```js
 // When muting the audio stream
@@ -198,6 +198,14 @@ json.oncallunmuted = (call) => {
     ...
 }
 ```
+
+### muteAudio() & unmuteAudio()
+
+The same function exists to mute only the audio part. The same event is received.
+
+### muteVideo() && unmuteVideo()
+
+The same function exists to mute only the video part. The same event is received.
 
 ### end()
 

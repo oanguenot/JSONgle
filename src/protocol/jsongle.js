@@ -117,6 +117,13 @@ export const CALL_ACTIVE_STATE = {
     IS_MUTED_BOTH_SIDE: "is-muted-both-side",
 };
 
+export const MUTED_MEDIA = {
+    NONE: "none",
+    AUDIO: "audio",
+    VIDEO: "video",
+    ALL: "audio+video",
+};
+
 export const CALL_ESTABLISHING_STATE = {
     HAVE_NO_CANDIDATE: "have-no-candidate",
     GOT_LOCAL_CANDIDATE: "got-local-candidate",

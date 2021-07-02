@@ -8,6 +8,7 @@ import {
     CALL_ACTIVE_STATE,
     CALL_ESTABLISHING_STATE,
     SESSION_INFO_REASON,
+    MUTED_MEDIA,
 } from "./jsongle";
 
 const getActionFromStateAndStep = (state, endedReason, offeringState, establishingState, forced) => {
@@ -80,8 +81,10 @@ export default class Call {
         this._activeState = CALL_ACTIVE_STATE.IS_NOT_ACTIVE;
         this._muted = null;
         this._unmuted = null;
+        this._mutedMedia = MUTED_MEDIA.NONE;
         this._remoteMuted = null;
         this._remoteUnmuted = null;
+        this._remoteMutedMedia = MUTED_MEDIA.NONE;
         this._ended = null;
         this._endedReason = CALL_ENDED_REASON.EMPTY;
         this._localOffer = null;
@@ -220,6 +223,14 @@ export default class Call {
 
     get muted() {
         return this._activeState === CALL_ACTIVE_STATE.IS_MUTED_LOCAL || this._activeState === CALL_ACTIVE_STATE.IS_MUTED_BOTH_SIDE;
+    }
+
+    get mutedMedia() {
+        return this._mutedMedia;
+    }
+
+    get remoteMutedMedia() {
+        return this._remoteMutedMedia;
     }
 
     get mutedAt() {
@@ -459,27 +470,39 @@ export default class Call {
         return this;
     }
 
-    transitToMuted(mutedAt, isLocal) {
+    transitToMuted(mutedAt, isLocal, media) {
         if (isLocal) {
-            this._activeState = this._activeState === CALL_ACTIVE_STATE.IS_MUTED_REMOTE ? CALL_ACTIVE_STATE.IS_MUTED_BOTH_SIDE : CALL_ACTIVE_STATE.IS_MUTED_LOCAL;
             this._muted = mutedAt;
+            if (this._mutedMedia === MUTED_MEDIA.NONE) {
+                this._mutedMedia = media;
+                this._activeState = this._activeState === CALL_ACTIVE_STATE.IS_MUTED_REMOTE ? CALL_ACTIVE_STATE.IS_MUTED_BOTH_SIDE : CALL_ACTIVE_STATE.IS_MUTED_LOCAL;
+            } else {
+                this._mutedMedia = MUTED_MEDIA.ALL;
+            }
         } else {
             this._activeState = this._activeState === CALL_ACTIVE_STATE.IS_MUTED_LOCAL ? CALL_ACTIVE_STATE.IS_MUTED_BOTH_SIDE : CALL_ACTIVE_STATE.IS_MUTED_REMOTE;
             this._remoteMuted = mutedAt;
+            this._remoteMutedMedia = media;
         }
-
         return this;
     }
 
-    transitToUnmuted(unmutedAt, isLocal) {
+    transitToUnmuted(unmutedAt, isLocal, media) {
         if (isLocal) {
-            this._activeState = this._activeState === CALL_ACTIVE_STATE.IS_MUTED_BOTH_SIDE ? CALL_ACTIVE_STATE.IS_MUTED_REMOTE : CALL_ACTIVE_STATE.IS_ACTIVE_BOTH_SIDE;
             this._unmuted = unmutedAt;
+            if (this._mutedMedia === media) {
+                this._mutedMedia = MUTED_MEDIA.NONE;
+                this._activeState = this._activeState === CALL_ACTIVE_STATE.IS_MUTED_BOTH_SIDE ? CALL_ACTIVE_STATE.IS_MUTED_REMOTE : CALL_ACTIVE_STATE.IS_ACTIVE_BOTH_SIDE;
+            } else {
+                this._mutedMedia = media === MUTED_MEDIA.AUDIO ? MUTED_MEDIA.VIDEO : MUTED_MEDIA.AUDIO;
+            }
         } else {
-            this._activeState = this._activeState === CALL_ACTIVE_STATE.IS_MUTED_BOTH_SIDE ? CALL_ACTIVE_STATE.IS_MUTED_LOCAL : CALL_ACTIVE_STATE.IS_ACTIVE_BOTH_SIDE;
+            if (media === MUTED_MEDIA.NONE) {
+                this._activeState = this._activeState === CALL_ACTIVE_STATE.IS_MUTED_BOTH_SIDE ? CALL_ACTIVE_STATE.IS_MUTED_LOCAL : CALL_ACTIVE_STATE.IS_ACTIVE_BOTH_SIDE;
+            }
             this._remoteUnmuted = unmutedAt;
+            this._remoteMutedMedia = media;
         }
-
         return this;
     }
 
@@ -546,11 +569,13 @@ export default class Call {
                     if (inheritedAction === SESSION_INFO_REASON.MUTE) {
                         return {
                             muted: this._muted ? this._muted.toJSON() : null,
+                            media: this._mutedMedia,
                         };
                     }
                     if (inheritedAction === SESSION_INFO_REASON.UNMUTE) {
                         return {
                             unmuted: this._unmuted ? this._unmuted.toJSON() : null,
+                            media: this._mutedMedia,
                         };
                     }
                     return {
@@ -642,32 +667,5 @@ export default class Call {
             localCandidates: this._candidates,
             remoteCandidates: this._remoteCandidates,
         };
-    }
-
-    clone() {
-        const cloned = new Call(this._caller, this._callee, this._media, this._direction, this._id, this._initiated);
-
-        cloned.state = this._state;
-        cloned.triedAt = this._tried;
-        cloned.rangAt = this._rang;
-        cloned.proceededAt = this._proceeded;
-        cloned.offeringAt = this._offering;
-        cloned.offeringState = this._offeringState;
-        cloned.offeredAt = this._offered;
-        cloned.establishingAt = this._establishing;
-        cloned.establishingState = this._establishingState;
-        cloned.activeAt = this._active;
-        cloned.activeState = this._activeState;
-        cloned.endedAt = this._ended;
-        cloned.endedReason = this._endedReason;
-        cloned.localOffer = this._localOffer;
-        cloned.remoteOffer = this._remoteOffer;
-        cloned.candidates = this._candidates;
-        cloned.remoteCandidates = this._remoteCandidates;
-        cloned.mutedAt = this._muted;
-        cloned.unmutedAt = this._unmuted;
-        cloned.remoteMutedAt = this._remoteMuted;
-        cloned.remoteUnmutedAt = this._remoteUnmuted;
-        return cloned;
     }
 }
