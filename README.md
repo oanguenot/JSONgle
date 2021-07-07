@@ -92,8 +92,11 @@ import JSONGle from "jsongle";
 
 const jsongle = new JSONGle({
     transport: transportCfg,
+    logLevel: 'debug'
 });
 ```
+
+Property `logLevel` allows to set the log level. Possible values are: `none`, `debug`, `info`, `warning`, `error`.
 
 If you are using **Vanilla** JavaScript without bundling your application (This is the case for example if you are not using a transpiler such as using React/Babel or Angular/TypeScript), you have to load the library differently:
 
