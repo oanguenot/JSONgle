@@ -1,4 +1,4 @@
-import { debug } from "../utils/log";
+import { debug, info } from "../utils/log";
 import { JSONGLE_ACTIONS } from "../protocol/jsongle";
 
 const moduleNameSend = "transport ->";
@@ -16,7 +16,8 @@ export default class Transport {
         // Define the callback function to use when receiving new messages
         this._transport.in((message) => {
             // TODO: check message integrity: has message.action ?
-            debug(moduleNameReceived, `receive message ${message.id} with action '${message.jsongle.action}'`);
+            info(moduleNameReceived, `receive message ${message.id} with action '${message.jsongle.action}'`);
+            debug(moduleNameReceived, JSON.stringify(message));
             callback.call(context, message);
         });
     }
@@ -43,7 +44,8 @@ export default class Transport {
 
         const completeMessage = { ...message, from: this._from };
 
-        debug(moduleNameSend, `send message ${completeMessage.id} with action '${completeMessage.jsongle.action}'`);
+        info(moduleNameSend, `send message ${completeMessage.id} with action '${completeMessage.jsongle.action}'`);
+        debug(moduleNameSend, JSON.stringify(message));
         this._transport.out(completeMessage);
     }
 }

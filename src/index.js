@@ -5,9 +5,9 @@ import {
 } from "./utils/helper";
 import SessionHandler from "./protocol/SessionHandler";
 import {
-    setVerboseLog,
     debug,
     info,
+    setLogLevel,
 } from "./utils/log";
 import { createStore } from "./data/Store";
 import { reducer as callReducer } from "./data/CallsReducer";
@@ -28,6 +28,7 @@ import {
     ACK_TYPES,
     TYPING_STATES,
     MUTED_MEDIA,
+    LOG_LEVEL,
 } from "./protocol/jsongle";
 
 const REQUEST_TIMEOUT = 5000;
@@ -44,8 +45,8 @@ export default class JSONgle {
             throw new Error("Argument 'cfg', is missing - 'Object' containing the global configuration");
         }
 
-        if (cfg.verbose) {
-            this.verboseLog = true;
+        if (cfg.logLevel) {
+            setLogLevel(cfg.logLevel);
         }
         this._name = getLibName();
         this._version = getVersion();
@@ -606,12 +607,12 @@ export default class JSONgle {
     }
 
     /**
-     * Set verbose log.
+     * Set the log level.
      * True to set log level to verbose, false otherwise
      */
-    set verboseLog(isVerbose) {
-        info(moduleName, `verbose log is activated '${isVerbose}'`);
-        setVerboseLog(isVerbose);
+    set logLevel(level) {
+        info(moduleName, `change log level to '${level}'`);
+        setLogLevel(level);
     }
 
     /**
@@ -661,5 +662,12 @@ export default class JSONgle {
      */
     static get CALL_ESTABLISHING_STATE() {
         return CALL_ESTABLISHING_STATE;
+    }
+
+    /**
+     * Definition of type LOG_LEVEL
+     */
+     static get LOG_LEVEL() {
+        return LOG_LEVEL;
     }
 }
