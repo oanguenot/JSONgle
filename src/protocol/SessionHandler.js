@@ -277,16 +277,20 @@ export default class SessionHandler {
     }
 
     abort(reason, abortedAt) {
-        debug(moduleName, `abort call '${this._currentCall.id}'`);
-        this._currentCall.transitToEndedWithReasonAborted(reason, abortedAt);
-        debug(moduleName, `call state moved to '${this._currentCall.state}' for call '${this._currentCall.id}'`);
+        if (this._currentCall) {
+            debug(moduleName, `abort call '${this._currentCall.id}'`);
+            this._currentCall.transitToEndedWithReasonAborted(reason, abortedAt);
+            debug(moduleName, `call state moved to '${this._currentCall.state}' for call '${this._currentCall.id}'`);
 
-        this.fireOnCallStateChanged();
-        this.fireOnCallEnded();
-        this.fireOnTicket();
+            this.fireOnCallStateChanged();
+            this.fireOnCallEnded();
+            this.fireOnTicket();
 
-        this._callStore.dispatch({ type: CALL_ACTIONS.RELEASE_CALL, payload: {} });
-        this._currentCall = null;
+            this._callStore.dispatch({ type: CALL_ACTIONS.RELEASE_CALL, payload: {} });
+            this._currentCall = null;
+        } else {
+            debug(moduleName, "call already released");
+        }
     }
 
     ringing(isNewCall = false, ringingAt) {
