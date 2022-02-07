@@ -456,8 +456,11 @@ export default class SessionHandler {
             this._transport.sendMessage(msg);
         } else {
             debug(moduleName, "received msg");
+            // Get the bare from (without the uid when in muc)
+            const from = msg.from.split("/")[0];
+            const isMuc = msg.from.includes("/");
             // acknowledge the message received
-            const ackEvent = buildEvent(JSONGLE_ACTIONS.EVENT, msg.from, MESSAGE_EVENTS.ACK, EVENTS_NAMESPACE.MESSAGE, { acknowledged: new Date().toJSON(), mid: msg.id, type: ACK_TYPES.RECEIVED });
+            const ackEvent = buildEvent(JSONGLE_ACTIONS.EVENT, from, MESSAGE_EVENTS.ACK, isMuc ? EVENTS_NAMESPACE.MUC : EVENTS_NAMESPACE.MESSAGE, { acknowledged: new Date().toJSON(), mid: msg.id, type: ACK_TYPES.RECEIVED });
             this._transport.sendMessage(ackEvent);
 
             // Fire the event
