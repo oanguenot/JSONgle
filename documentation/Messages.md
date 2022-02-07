@@ -346,7 +346,6 @@ The **session-custom** message is sent by the issuer or the responder when he wa
     "jsongle": {
         "action": "session-custom",
         "description": { 
-          // custom part
          }
     }
 }
@@ -366,7 +365,6 @@ The **iq-set** message is sent by the issuer to request a service. It contains a
         "query": "session-register",
         "transaction": "0d424e84-c3f0-48c4",
         "description": { 
-          // data required by the query if any
          }
     }
 }
@@ -386,7 +384,6 @@ The **iq-result** message is sent by the provider of the service in case of succ
         "query": "session-register",
         "transaction": "0d424e84-c3f0-48c4",
         "description": { 
-          // data 
          }
     }
 }
@@ -408,7 +405,7 @@ The **iq-error** message is sent by the provider of the service in case of error
         "description": { 
           "errorCode": 400101,
           "errorDetails": "Missing 'rid' parameter in query" 
-        } // additional properties depending on the result if any
+        }
     }
 }
 ```
@@ -424,7 +421,7 @@ The **ack** message is sent by the server to confirm the reception of a message 
     "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
     "jsongle": {
         "action": "ack",
-        "status": "success",      // Could be 'failed'
+        "status": "success",
         "transaction": "0d424e84-c3f0-48c4",
     }
 }
@@ -444,7 +441,6 @@ The **session-event** message is sent by the server to inform about actions done
         "namespace": "room",
         "event": "joined",
         "description": {
-          // Data depending on the namespace/event
         }
     }
 }
@@ -461,6 +457,7 @@ The **session-text** message is sent by a user when exchanging a text message an
     "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
     "jsongle": {
         "action": "session-text",
+        "namespace": "message",
         "description": {
           "content": "the text message"
         }

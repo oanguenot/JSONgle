@@ -303,7 +303,7 @@ export default class JSONgle {
 
     /**
      * Send a text message
-     * @param {string} to The id of the recipient, a room or the server
+     * @param {string} to The id of the recipient or a room or the server
      * @param {string} content The text message to send
      * @return {string} The id of the message (used for message acknowledgment)
      */
@@ -311,7 +311,22 @@ export default class JSONgle {
         if (!to || !content) {
             throw Error("Can't send a text message - bad parameters used");
         }
-        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.TEXT, to, { content });
+        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.TEXT, to, EVENTS_NAMESPACE.MESSAGE, { content });
+        this._sessionHandler.send(true, jsongleMsg);
+        return jsongleMsg.id;
+    }
+
+    /**
+     * Send a text message to a muc room
+     * @param {string} to The id of the muc room
+     * @param {string} content The text message to send
+     * @return {string} The id of the message (used for message acknowledgment)
+     */
+     sendMuc(to, content) {
+        if (!to || !content) {
+            throw Error("Can't send a text message - bad parameters used");
+        }
+        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.TEXT, to, EVENTS_NAMESPACE.MUC, { content });
         this._sessionHandler.send(true, jsongleMsg);
         return jsongleMsg.id;
     }
@@ -418,15 +433,28 @@ export default class JSONgle {
     }
 
     /**
-     * Send the is typing state
+     * Send the typing state
      * @param {boolean} state True when typing a message. False elsewhere
-     * @param {string} to The issuer of that message
+     * @param {string} to The id of the recipient
      */
      isTyping(state, to) {
         if (!to) {
             throw Error("Can't send the typing state - bad parameters used");
         }
         const isTypingEvent = buildEvent(JSONGLE_ACTIONS.EVENT, to, MESSAGE_EVENTS.TYPING, EVENTS_NAMESPACE.MESSAGE, { state: state ? TYPING_STATES.COMPOSING : TYPING_STATES.ACTIVE, updated: new Date().toJSON() });
+        this._sessionHandler.send(true, isTypingEvent);
+    }
+
+    /**
+     * Send the typing state in a muc room
+     * @param {boolean} state True when typing a message. False elsewhere
+     * @param {string} to The id of the recipient
+     */
+     isTypingMuc(state, to) {
+        if (!to) {
+            throw Error("Can't send the typing state - bad parameters used");
+        }
+        const isTypingEvent = buildEvent(JSONGLE_ACTIONS.EVENT, to, MESSAGE_EVENTS.TYPING, EVENTS_NAMESPACE.MUC, { state: state ? TYPING_STATES.COMPOSING : TYPING_STATES.ACTIVE, updated: new Date().toJSON() });
         this._sessionHandler.send(true, isTypingEvent);
     }
 

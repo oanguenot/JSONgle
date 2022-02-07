@@ -174,12 +174,12 @@ jsongle.mute()
 // When unmuting the audio stream
 jsongle.unmute()
 
-json.onlocalcallmuted = (call) => {
+jsongle.onlocalcallmuted = (call) => {
     // Do something when the local stream is muted
     ...
 }
 
-json.onlocalcallunmuted = (call) => {
+jsongle.onlocalcallunmuted = (call) => {
     // Do something when the local stream is unmuted
     ...
 }
@@ -188,12 +188,12 @@ json.onlocalcallunmuted = (call) => {
 The recipient will receive an event in the same way to be informed
 
 ```js
-json.oncallmuted = (call) => {
+jsongle.oncallmuted = (call) => {
     // Do something when the remote stream is muted
     ...
 }
 
-json.oncallunmuted = (call) => {
+jsongle.oncallunmuted = (call) => {
     // Do something when the remote stream is unmuted
     ...
 }
@@ -249,7 +249,7 @@ This method returns the `id` of the message generated that can be used to deal w
 
 ### send(string: to, string: content)
 
-At anytime, a text message can be exchanged to specific recipient (identified by his id), a room (identified by a roomid) or to the server directly (identified by the 'sn' property received in the **session-hello** event) by using the **send** method.
+At anytime, a text message can be exchanged to specific recipient (to=uid, namespace='room'), a p2p room (to=rid, namespace='room'), a muc room (to=rid, namespace='muc') or to the server directly (identified by the 'sn' property received in the **session-hello** event) by using the **send** method.
 
 **content** is the text message to send.
 
@@ -266,6 +266,10 @@ jsongle.onmessagereceived = (content, from, id) => {
 By listening to the event `onmessagereceived`, the remote recipient is able to handle the content of that message.
 
 This method returns the `id` of the message generated that can be used to deal with message acknowledgements.
+
+### sendMuc(string: to, string: content)
+
+Same for sending a text message in a muc room
 
 ### sendAReadAcknowledgement(string: id, string: to)
 
@@ -288,6 +292,10 @@ jsongle.onmessagereceived = (content, from, id) => {
 Any recipients of a room can be informed when someone is typing a message to streamline the conversation. When the user is writing a message, the method **isTyping()** can be called with a state equals to `true` to inform the recipients that a message is in progress. When the user is no more writing (eg: text content erased from the input field, long paused, etc...), the method **isTyping()** can be called with a state equals to `false` in the same way.
 
 Note: Receiving a new message from someone should reset the state of the isTyping automatically to `false` without having to send that message.
+
+### isTypingMuc(boolean: state, string: to)
+
+Same for sending the typing state in a muc room.
 
 ### request(string: to, string: query, object: content) -> Promise
 

@@ -132,6 +132,7 @@ export const CALL_ESTABLISHING_STATE = {
 
 export const EVENTS_NAMESPACE = {
     MESSAGE: "message",
+    MUC: "muc",
 };
 
 export const MESSAGE_EVENTS = {
@@ -229,12 +230,13 @@ export const getCallStateActionFromSignalingAction = (signalingAction, reason) =
     }
 };
 
-export const buildSimpleMessage = (action, to, description) => (
+export const buildSimpleMessage = (action, to, namespace, description) => (
     {
         id: generateNewId(),
         to,
         jsongle: {
             action,
+            namespace,
             description,
         },
     }
