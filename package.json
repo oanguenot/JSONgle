@@ -1,6 +1,6 @@
 {
     "name": "jsongle",
-    "version": "3.0.1",
+    "version": "3.0.2",
     "description": "JavaScript library for handling WebRTC signaling protocol based on JSON and Jingle",
     "main": "dist/JSONgle.js",
     "scripts": {

@@ -433,6 +433,19 @@ export default class JSONgle {
     }
 
     /**
+     * Read acknowledgement of a message received in a MUC
+     * @param {string} id The id of the message to ack
+     * @param {string} to The issuer of that message
+     */
+     sendAReadAcknowledgementMuc(id, to) {
+        if (!id || !to) {
+            throw Error("Can't mark a message a read - bad parameters used");
+        }
+        const jsongleAckEvent = buildEvent(JSONGLE_ACTIONS.EVENT, to, MESSAGE_EVENTS.ACK, EVENTS_NAMESPACE.MUC, { acknowledged: new Date().toJSON(), mid: id, type: ACK_TYPES.READ });
+        this._sessionHandler.send(true, jsongleAckEvent);
+    }
+
+    /**
      * Send the typing state
      * @param {boolean} state True when typing a message. False elsewhere
      * @param {string} to The id of the recipient
