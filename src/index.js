@@ -296,7 +296,22 @@ export default class JSONgle {
         if (!to || !content) {
             throw Error("Can't send a JSON message - bad parameters used");
         }
-        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.CUSTOM, to, content);
+        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.CUSTOM, to, EVENTS_NAMESPACE.MESSAGE, { sent: new Date().toJSON(), content });
+        this._sessionHandler.send(true, jsongleMsg);
+        return jsongleMsg.id;
+    }
+
+    /**
+     * Send a custom message to a MUC room
+     * @param {string} to The id of the recipient, a room or the server
+     * @param {Object} content The message to send
+     * @return {string} The id of the message (used for message acknowledgment)
+     */
+     sendJSONMUC(to, content) {
+        if (!to || !content) {
+            throw Error("Can't send a JSON message - bad parameters used");
+        }
+        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.CUSTOM, to, EVENTS_NAMESPACE.MUC, { sent: new Date().toJSON(), content });
         this._sessionHandler.send(true, jsongleMsg);
         return jsongleMsg.id;
     }
@@ -312,7 +327,7 @@ export default class JSONgle {
         if (!to || !content) {
             throw Error("Can't send a text message - bad parameters used");
         }
-        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.TEXT, to, EVENTS_NAMESPACE.MESSAGE, { content, data });
+        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.TEXT, to, EVENTS_NAMESPACE.MESSAGE, { sent: new Date().toJSON(), content, data });
         this._sessionHandler.send(true, jsongleMsg);
         return jsongleMsg.id;
     }
@@ -328,7 +343,7 @@ export default class JSONgle {
         if (!to || !content) {
             throw Error("Can't send a text message - bad parameters used");
         }
-        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.TEXT, to, EVENTS_NAMESPACE.MUC, { content, data });
+        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.TEXT, to, EVENTS_NAMESPACE.MUC, { sent: new Date().toJSON(), content, data });
         this._sessionHandler.send(true, jsongleMsg);
         return jsongleMsg.id;
     }
@@ -338,7 +353,7 @@ export default class JSONgle {
      * @param {string} to The id of the recipient, room or server
      * @param {string} query The query to execute (eg: session-register)
      * @param {object} content The JSON content
-     * @param {*} transaction A transaction id (a default one is generated if not set)
+     * @param {string} transaction A transaction id (a default one is generated if not set)
      */
     async request(to, query, content, transaction = generateNewId()) {
         return new Promise((resolve, reject) => {
@@ -445,6 +460,36 @@ export default class JSONgle {
         }
         const jsongleAckEvent = buildEvent(JSONGLE_ACTIONS.EVENT, to, MESSAGE_EVENTS.ACK, EVENTS_NAMESPACE.MUC, { acknowledged: new Date().toJSON(), mid: id, type: ACK_TYPES.READ });
         this._sessionHandler.send(true, jsongleAckEvent);
+    }
+
+    /**
+     * Send a reaction to a message
+     * @param {string} id The id of the message to react
+     * @param {string} reaction The reaction
+     * @param {string} to The issuer of the message
+     */
+    reactToMessage(id, reaction, to) {
+        if (!id || !to || !reaction) {
+            throw Error("Can't send a reaction to a message - bad parameters used");
+        }
+
+        const jsongleReactionEvent = buildEvent(JSONGLE_ACTIONS.EVENT, to, MESSAGE_EVENTS.REACTION, EVENTS_NAMESPACE.MESSAGE, { reacted: new Date().toJSON(), mid: id, type: reaction });
+        this._sessionHandler.send(true, jsongleReactionEvent);
+    }
+
+    /**
+     * Send a reaction to a message
+     * @param {string} id The id of the message to react
+     * @param {string} reaction The reaction
+     * @param {string} to The issuer of the message
+     */
+    reactToMessageMUC(id, reaction, to) {
+        if (!id || !to || !reaction) {
+            throw Error("Can't send a reaction to a message - bad parameters used");
+        }
+
+        const jsongleReactionEvent = buildEvent(JSONGLE_ACTIONS.EVENT, to, MESSAGE_EVENTS.REACTION, EVENTS_NAMESPACE.MUC, { reacted: new Date().toJSON(), mid: id, type: reaction });
+        this._sessionHandler.send(true, jsongleReactionEvent);
     }
 
     /**

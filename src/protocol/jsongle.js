@@ -138,6 +138,7 @@ export const EVENTS_NAMESPACE = {
 export const MESSAGE_EVENTS = {
     ACK: "ack",
     TYPING: "typing",
+    REACTION: "reaction",
 };
 
 export const ACK_TYPES = {

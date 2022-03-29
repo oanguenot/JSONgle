@@ -459,6 +459,7 @@ The **session-text** message is sent by a user when exchanging a text message an
         "action": "session-text",
         "namespace": "message",
         "description": {
+            "sent": "2021-04-29T16:07:10.476Z",
             "content": "the text message",
             "additionalContent": {
                 "property_1": "value_1",
