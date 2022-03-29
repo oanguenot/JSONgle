@@ -459,8 +459,12 @@ The **session-text** message is sent by a user when exchanging a text message an
         "action": "session-text",
         "namespace": "message",
         "description": {
-          "content": "the text message"
-        }
+            "content": "the text message",
+            "additionalContent": {
+                "property_1": "value_1",
+                "property_2": "value_2",
+            }
+        } 
     }
 }
 ```

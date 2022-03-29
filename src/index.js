@@ -305,13 +305,14 @@ export default class JSONgle {
      * Send a text message
      * @param {string} to The id of the recipient or a room or the server
      * @param {string} content The text message to send
+     * @param {object} data The additional content to send - can be any type of content: object, string
      * @return {string} The id of the message (used for message acknowledgment)
      */
-     send(to, content) {
+     send(to, content, data) {
         if (!to || !content) {
             throw Error("Can't send a text message - bad parameters used");
         }
-        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.TEXT, to, EVENTS_NAMESPACE.MESSAGE, { content });
+        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.TEXT, to, EVENTS_NAMESPACE.MESSAGE, { content, data });
         this._sessionHandler.send(true, jsongleMsg);
         return jsongleMsg.id;
     }
@@ -320,13 +321,14 @@ export default class JSONgle {
      * Send a text message to a muc room
      * @param {string} to The id of the muc room
      * @param {string} content The text message to send
+     * @param {object} data The additional content to send - can be any type of content: object, string
      * @return {string} The id of the message (used for message acknowledgment)
      */
-     sendMuc(to, content) {
+     sendMuc(to, content, data) {
         if (!to || !content) {
             throw Error("Can't send a text message - bad parameters used");
         }
-        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.TEXT, to, EVENTS_NAMESPACE.MUC, { content });
+        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.TEXT, to, EVENTS_NAMESPACE.MUC, { content, data });
         this._sessionHandler.send(true, jsongleMsg);
         return jsongleMsg.id;
     }

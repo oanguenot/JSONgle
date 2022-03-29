@@ -247,11 +247,11 @@ By listening to the event `ondatareceived`, the remote recipient is able to hand
 
 This method returns the `id` of the message generated that can be used to deal with message acknowledgements.
 
-### send(string: to, string: content)
+### send(string: to, string: content, object: data?)
 
-At anytime, a text message can be exchanged to specific recipient (to=uid, namespace='room'), a p2p room (to=rid, namespace='room'), a muc room (to=rid, namespace='muc') or to the server directly (identified by the 'sn' property received in the **session-hello** event) by using the **send** method.
+At anytime, a text message can be exchanged to specific recipient in a P2P room or to the server directly (identified by the 'sn' property received in the **session-hello** event) by using the **send** method.
 
-**content** is the text message to send.
+**content** is the text message to send. An optional **data** content can be sent. This can be a simple data type, an array or a JSON plain object. 
 
 ```js
 const msgId = jsongle.send('room_4', "Hello all!");
@@ -267,9 +267,11 @@ By listening to the event `onmessagereceived`, the remote recipient is able to h
 
 This method returns the `id` of the message generated that can be used to deal with message acknowledgements.
 
-### sendMuc(string: to, string: content)
+### sendMuc(string: to, string: content, object: data?)
 
-Same for sending a text message in a muc room
+Same for sending a text message in a muc room which means in a room where they are multiple participants.
+
+**content** is the text message to send. An optional **data** content can be sent. This can be a simple data type, an array or a JSON plain object. 
 
 ### sendAReadAcknowledgement(string: id, string: to)
 
