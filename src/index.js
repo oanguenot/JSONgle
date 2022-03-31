@@ -320,14 +320,14 @@ export default class JSONgle {
      * Send a text message
      * @param {string} to The id of the recipient or a room or the server
      * @param {string} content The text message to send
-     * @param {object} data The additional content to send - can be any type of content: object, string
+     * @param {object} additionalContent (Optional) The additional content to send - can be any type of content: object, string
      * @return {string} The id of the message (used for message acknowledgment)
      */
-     send(to, content, data) {
-        if (!to || !content) {
+     send(to, content, additionalContent) {
+        if (!to || (!content && !additionalContent)) {
             throw Error("Can't send a text message - bad parameters used");
         }
-        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.TEXT, to, EVENTS_NAMESPACE.MESSAGE, { sent: new Date().toJSON(), content, data });
+        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.TEXT, to, EVENTS_NAMESPACE.MESSAGE, { sent: new Date().toJSON(), content: content || "", additionalContent: additionalContent || null });
         this._sessionHandler.send(true, jsongleMsg);
         return jsongleMsg.id;
     }
@@ -336,14 +336,15 @@ export default class JSONgle {
      * Send a text message to a muc room
      * @param {string} to The id of the muc room
      * @param {string} content The text message to send
-     * @param {object} data The additional content to send - can be any type of content: object, string
+     * @param {object} data (Optional) The additional content to send - can be any type of content: object, string
      * @return {string} The id of the message (used for message acknowledgment)
      */
-     sendMuc(to, content, data) {
-        if (!to || !content) {
+     sendMuc(to, content, additionalContent) {
+        if (!to || (!content && !additionalContent)) {
             throw Error("Can't send a text message - bad parameters used");
         }
-        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.TEXT, to, EVENTS_NAMESPACE.MUC, { sent: new Date().toJSON(), content, data });
+
+        const jsongleMsg = buildSimpleMessage(JSONGLE_ACTIONS.TEXT, to, EVENTS_NAMESPACE.MUC, { sent: new Date().toJSON(), content: content || "", additionalContent: additionalContent || null });
         this._sessionHandler.send(true, jsongleMsg);
         return jsongleMsg.id;
     }
