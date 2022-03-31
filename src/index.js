@@ -465,30 +465,30 @@ export default class JSONgle {
     /**
      * Send a reaction to a message
      * @param {string} id The id of the message to react
-     * @param {string} reaction The reaction
+     * @param {string} reaction The reaction. Can be empty to remove a reaction
      * @param {string} to The issuer of the message
      */
     reactToMessage(id, reaction, to) {
-        if (!id || !to || !reaction) {
+        if (!id || !to) {
             throw Error("Can't send a reaction to a message - bad parameters used");
         }
 
-        const jsongleReactionEvent = buildEvent(JSONGLE_ACTIONS.EVENT, to, MESSAGE_EVENTS.REACTION, EVENTS_NAMESPACE.MESSAGE, { reacted: new Date().toJSON(), mid: id, type: reaction });
+        const jsongleReactionEvent = buildEvent(JSONGLE_ACTIONS.EVENT, to, MESSAGE_EVENTS.REACTION, EVENTS_NAMESPACE.MESSAGE, { reacted: new Date().toJSON(), mid: id, type: reaction || "" });
         this._sessionHandler.send(true, jsongleReactionEvent);
     }
 
     /**
      * Send a reaction to a message
      * @param {string} id The id of the message to react
-     * @param {string} reaction The reaction
+     * @param {string} reaction The reaction. Can be empty to remove a reaction
      * @param {string} to The issuer of the message
      */
     reactToMessageMUC(id, reaction, to) {
-        if (!id || !to || !reaction) {
+        if (!id || !to) {
             throw Error("Can't send a reaction to a message - bad parameters used");
         }
 
-        const jsongleReactionEvent = buildEvent(JSONGLE_ACTIONS.EVENT, to, MESSAGE_EVENTS.REACTION, EVENTS_NAMESPACE.MUC, { reacted: new Date().toJSON(), mid: id, type: reaction });
+        const jsongleReactionEvent = buildEvent(JSONGLE_ACTIONS.EVENT, to, MESSAGE_EVENTS.REACTION, EVENTS_NAMESPACE.MUC, { reacted: new Date().toJSON(), mid: id, type: reaction || "" });
         this._sessionHandler.send(true, jsongleReactionEvent);
     }
 
