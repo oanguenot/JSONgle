@@ -18,6 +18,7 @@ export const JSONGLE_ACTIONS = {
     IQ_ERROR: "iq-error",
     ERROR: "session-error",
     EVENT: "session-event",
+    METRICS: "session-metrics",
     ACK: "ack",
     NOOP: "noop",
 };
@@ -133,6 +134,7 @@ export const CALL_ESTABLISHING_STATE = {
 export const EVENTS_NAMESPACE = {
     MESSAGE: "message",
     MUC: "muc",
+    CALL: "call",
 };
 
 export const MESSAGE_EVENTS = {
@@ -236,6 +238,19 @@ export const buildSimpleMessage = (action, to, namespace, description) => (
         id: generateNewId(),
         to,
         jsongle: {
+            action,
+            namespace,
+            description,
+        },
+    }
+);
+
+export const buildCallMessage = (action, to, namespace, sid, description) => (
+    {
+        id: generateNewId(),
+        to,
+        jsongle: {
+            sid,
             action,
             namespace,
             description,

@@ -9,6 +9,7 @@ import {
     CALL_ESTABLISHING_STATE,
     SESSION_INFO_REASON,
     MUTED_MEDIA,
+    EVENTS_NAMESPACE,
 } from "./jsongle";
 
 const getActionFromStateAndStep = (state, endedReason, offeringState, establishingState, forced) => {
@@ -626,6 +627,7 @@ export default class Call {
             id: generateNewId(),
             from: this.outgoing ? this._caller : this._callee,
             to: this.outgoing ? this._callee : this._caller,
+            namespace: EVENTS_NAMESPACE.CALL,
             jsongle: {
                 sid: this._id,
                 action,

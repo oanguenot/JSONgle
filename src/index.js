@@ -23,6 +23,7 @@ import {
     buildSimpleMessage,
     buildQuery,
     buildEvent,
+    buildCallMessage,
     MESSAGE_EVENTS,
     EVENTS_NAMESPACE,
     ACK_TYPES,
@@ -287,8 +288,51 @@ export default class JSONgle {
     }
 
     /**
+     * Report metrics to the server
+     * @param {string} sid The session or call Id
+     * @param {object} metrics An object containing the metrics to send
+     * @param {string} to The id of the recpient (can be the server, a recipient or a room)
+     */
+     reportMetrics(sid, metrics, to) {
+        if (!metrics && !sid && !to) {
+            throw Error("Can't send metrics - bad parameters used");
+        }
+
+        const report = {};
+
+        if ("mos" in metrics && typeof metrics.mos === "number") {
+            report.mos = metrics.mos;
+        }
+
+        if ("duration" in metrics && typeof metrics.duration === "number") {
+            report.duration = metrics.duration;
+        }
+
+        if ("ua" in metrics && typeof metrics.ua === "string") {
+            report.ua = metrics.ua;
+        }
+
+        if ("route" in metrics && typeof metrics.route === "string") {
+            report.route = metrics.route;
+        }
+
+        if ("error" in metrics && typeof metrics.error === "string") {
+            report.error = metrics.error;
+        }
+
+        if (Object.keys(report) === 0) {
+            throw Error("Can't send metrics - no parameters provided");
+        }
+
+        report.issuedAt = new Date().toJSON();
+
+        const metricsMsg = buildCallMessage(JSONGLE_ACTIONS.METRICS, to, EVENTS_NAMESPACE.CALL, sid, report);
+        this._sessionHandler.send(true, metricsMsg);
+    }
+
+    /**
      * Send a custom message
-     * @param {string} to The id of the recipient, a room or the server
+     * @param {string} to The id of the recipient
      * @param {Object} content The message to send
      * @return {string} The id of the message (used for message acknowledgment)
      */
@@ -303,7 +347,7 @@ export default class JSONgle {
 
     /**
      * Send a custom message to a MUC room
-     * @param {string} to The id of the recipient, a room or the server
+     * @param {string} to The id of room
      * @param {Object} content The message to send
      * @return {string} The id of the message (used for message acknowledgment)
      */
