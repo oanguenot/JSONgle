@@ -345,3 +345,32 @@ jsongle.onrequest((request, from) => {
   }
 });
 ```
+
+### reportMetrics(string: callId, object: metrics, string: to)
+
+At any time, the library can report metrics to the server. The following metrics can be added:
+
+```js
+const callId = '188-4225-bf3a-d4ad43654697';
+
+jsongle.reportMetrics(callId, {
+  ua: navigator.userAgent,
+  route: "relay",
+  mos: 4.322,
+  duration: 24,
+}, 'server-id');
+```
+
+Each metrics are optional but at least one is mandatory.
+
+In case of error, the library can report it to the server using the `error` metric:
+
+```js
+const callId = '188-4225-bf3a-d4ad43654697';
+
+jsongle.reportMetrics(callId, {
+  error: 'ice-failed',
+}, 'server-id');
+```
+
+The `error` metric can be any labels.
