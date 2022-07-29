@@ -1,7 +1,59 @@
 
 # API 
 
-**JSONgle** exposes the following API
+**JSONgle** exposes an API described here.
+
+| **JSONgle API**                          | **For WebRTC (call)** | **For Messaging** |
+|:-----------------------------------------|:---------------------:|:-----------------:|
+| get currentCall                          |        **YES**        |        NO         |
+| get id                                   |        **YES**        |        NO         |
+| get name                                 |          NO           |        NO         |
+| get version                              |          NO           |        NO         |
+| get ticket                               |        **YES**        |        NO         |
+| set logLevel                             |        **YES**        |      **YES**      |
+| set oncall                               |        **YES**        |        NO         |
+| set oncallended                          |        **YES**        |        NO         |
+| set oncallmuted                          |        **YES**        |        NO         |
+| set oncallstatechanged                   |        **YES**        |        NO         |
+| set oncallunmuted                        |        **YES**        |        NO         |
+| set oncandidatereceived                  |        **YES**        |        NO         |
+| set ondatareceived                       |          NO           |      **YES**      |
+| set onerror                              |        **YES**        |      **YES**      |
+| set onevent                              |        **YES**        |      **YES**      |
+| set onlocalcallmuted                     |        **YES**        |        NO         |
+| set onlocalcallunmuted                   |        **YES**        |        NO         |
+| set onmessagereceived                    |          NO           |      **YES**      |
+| set onofferneeded                        |        **YES**        |        NO         |
+| set onofferreceived                      |        **YES**        |        NO         |
+| set onrequest                            |        **YES**        |      **YES**      |
+| set onticket                             |        **YES**        |        NO         |
+| ----------------                         |     ------------      |    -----------    |
+| answer(to, query, content, transaction)  |        **YES**        |        NO         |
+| call(to, media)                          |        **YES**        |        NO         |
+| end()                                    |        **YES**        |        NO         |
+| proceed()                                |        **YES**        |        NO         |
+| decline()                                |        **YES**        |        NO         |
+| isTyping(state, to)                      |          NO           |      **YES**      |
+| isTypingMuc(state, to)                   |          NO           |      **YES**      |
+| mute()                                   |        **YES**        |        NO         |
+| muteAudio()                              |        **YES**        |        NO         |
+| muteVideo()                              |        **YES**        |        NO         |
+| reactToMessage(id, reaction, to)         |          NO           |      **YES**      |
+| reactToMessageMUC(id, reaction, to)      |          NO           |      **YES**      |
+| reportMetrics(sid, metrics, to)          |        **YES**        |        NO         |
+| request(to, query, content, transaction) |        **YES**        |      **YES**      |
+| sendCandidate(candidate)                 |        **YES**        |        NO         |
+| send(to, content, additionalContent)     |          NO           |      **YES**      |
+| sendMuc(to, content, additionalContent)  |          NO           |      **YES**      |
+| sendJSON(to, content)                    |          NO           |      **YES**      |
+| sendJSONMUC(to, content)                 |          NO           |      **YES**      |
+| sendOffer(offer)                         |        **YES**        |        NO         |
+| sendAReadAcknowledgement(id, to)         |          NO           |      **YES**      |
+| sendAReadAcknowledgementMuc(id, to)      |          NO           |      **YES**      |
+| setAsActive()                            |        **YES**        |        NO         |
+| unmute()                                 |        **YES**        |        NO         |
+| unmuteAudio()                            |        **YES**        |        NO         |
+| unmuteVideo()                            |        **YES**        |        NO         |
 
 ## Properties
 
@@ -9,9 +61,9 @@ The **JSONgle** object instance offers the following properties:
 
 ### currentCall -> Call
 
-Get the current call or null
+Get the current call or null if not exists
 
-### id
+### id -> string
 
 Get the connected user id
 
@@ -120,7 +172,7 @@ jsongle.onofferneeded = async (call) => {
 In the same way, when the remote recipient sends his SDP (his local description), **JSONGle** fires an event with that description in order for your application to give it to the WebRTC stack. Here is the minimum to do
 
 ```js
-jsongle.onofferreceived = (remoteDescription) {
+jsongle.onofferreceived = (remoteDescription) => {
     pc.setRemoteDescription(remoteDescription);
 }
 ```
@@ -176,12 +228,10 @@ jsongle.unmute()
 
 jsongle.onlocalcallmuted = (call) => {
     // Do something when the local stream is muted
-    ...
 }
 
 jsongle.onlocalcallunmuted = (call) => {
     // Do something when the local stream is unmuted
-    ...
 }
 ```
 
@@ -190,12 +240,10 @@ The recipient will receive an event in the same way to be informed
 ```js
 jsongle.oncallmuted = (call) => {
     // Do something when the remote stream is muted
-    ...
 }
 
 jsongle.oncallunmuted = (call) => {
     // Do something when the remote stream is unmuted
-    ...
 }
 ```
 
@@ -301,7 +349,7 @@ Same for sending the typing state in a muc room.
 
 ### request(string: to, string: query, object: content) -> Promise
 
-At anytime, a request can be send to the server to execute an action (eg: registering to a room). For that, JSONgle offers the `request` method that is a **Promise**.
+At anytime, a request can be sent to the server to execute an action (eg: registering to a room). For that, JSONgle offers the `request` method that is a **Promise**.
 
 **content** is an object representing the requested data to send.
 
@@ -334,11 +382,6 @@ When a request has been caught by the `onrequest` handler, the application can a
 Once the server has received the response, it sends back an `ack`. When an error occurs (eg: bad parameters), the `onerror` handler is fired and contains the description of the error received.
 
 ```js
-// A request
-const  = {
-  rid: '188-4225-bf3a-d4ad43654697',
-}
-
 jsongle.onrequest((request, from) => {
   if(request.action === 'iq-get' && request.query === 'session-hello') {
     jsongle.answer(from, 'session-hello', {'uid':'jdoe@mycorp.com', 'dn': 'Jon Doe', }, request.transaction);

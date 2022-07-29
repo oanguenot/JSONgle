@@ -2,28 +2,29 @@
 
 ## Introduction
 
-WebRTC **JSONgle** is a JavaScript library that proposes an agnostic transport implementation based and adapted from the Jingle signaling protocol for WebRTC calls using JSON messages.
+WebRTC **JSONgle** is a JavaScript library that proposes an agnostic transport protocol implementation based and adapted from the Jingle signaling protocol for WebRTC calls using JSON messages.
 
 Goal is that an application can use its existing server to exchange the signaling messages between peers but relies on **JSONgle** for the content of these messages.
 
 The example provided here is using **Socket.io** as the transport layer. But an abstraction is done to map your existing transport layer to **JSONgle**.
 
+By looking at the [messages exchanged](./documentation/Messages.md), **JSONgle** protocol can be adapted to any languages. 
+
 ## Signaling and WebRTC
 
 WebRTC needs a signaling server to negotiate with the remote peer about the media and the best path to follow.
 
-In fact, only few information need to be exchanged: a **SDP** and some **ICE Candidates**.
+In fact, only little information need to be exchanged: an **SDP** and some **ICE Candidates**.
 
-So what **JSONgle** does is to ask for a local SDP in one side and its associated candidates and send them to the remote peer. Then by asking to that remote peer in a same manner his local description and some candidates that are given back to the initial sender. And that all for initializing the call.
+So what **JSONgle** does, is to ask for a local SDP in one side and its associated candidates and send them to the remote peer. Then by asking that remote peer in a same manner his local description and the candidates that are given back to the initial sender. And that all for initializing the call.
 
-Additionally to that, **JSONgle** can transmit information and actions done on the call such as when muting or unmuting the media.
+Additionally, to that, **JSONgle** can transmit information and actions done on the call such as when muting or unmuting a media.
 
 Finally, **JSONgle** computes internally a **Call State** machine that can be retrieved through some events and generates at the end of the communication a **log ticket** that summarizes the call progress and information.
 
 ## WebRTC Adapter
 
 Don't forget to install and use [**WebRTC adapter**](https://github.com/webrtcHacks/adapter) in order to help on the managment of WebRTC on different browsers (JavaScript API).
-
 
 ## Install
 

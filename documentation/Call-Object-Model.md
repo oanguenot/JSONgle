@@ -25,7 +25,7 @@ The `Call` object has the following properties
 A `Call` can have the following states:
 
 | **State**   | **Description**                                                                                                      | **Reason**                                                       |
-| :---------- | :------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------- |
+|:------------|:---------------------------------------------------------------------------------------------------------------------|:-----------------------------------------------------------------|
 | `new`       | Call has just been created                                                                                           |                                                                  |
 | `trying`    | Call has been received by the server and is being routed to the remote recipient.<br>Only for the issuer of the call |                                                                  |
 | `ringing`   | Call has been received by the remote peer and is being presented<br>Only for the issuer                              |                                                                  |
