@@ -410,7 +410,7 @@ The **iq-error** message is sent by the provider of the service in case of error
 }
 ```
 
-## ack
+## ack (Server)
 
 The **ack** message is sent by the server to confirm the reception of a message expected by the server.
 
@@ -438,10 +438,116 @@ The **session-event** message is sent by the server to inform about actions done
     "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
     "jsongle": {
         "action": "session-event",
-        "namespace": "room",
+        "namespace": "muc",
         "event": "joined",
         "description": {
         }
+    }
+}
+```
+
+### session-event - composing/active
+
+Users can send an action **session-event** with the event **typing** to inform the recipient(s) when composing a message.
+
+```json
+{
+    "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
+    "from": "858888d2-8e69-4910-9893-b979ddbc8c15",
+    "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
+    "jsongle": {
+        "action": "session-event",
+        "namespace": "muc",
+        "event": "typing",
+        "description": {
+            "updated": "2021-04-29T16:07:10.476Z",
+            "state": "composing"
+        } 
+    }
+}
+```
+
+Note: When the user is no more composing a message, he has to send a **session-event** again with the state equals to **active**.
+
+```json
+{
+    "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
+    "from": "858888d2-8e69-4910-9893-b979ddbc8c15",
+    "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
+    "jsongle": {
+        "action": "session-event",
+        "namespace": "muc",
+        "event": "typing",
+        "description": {
+            "updated": "2021-04-29T16:07:10.476Z",
+            "state": "composing"
+        } 
+    }
+}
+```
+
+### session-event - ack
+
+Users can acknowledge messages received by sending a **session-event** message with event **ack**.
+
+To acknowledge the receipt of a message, the following action should be sent. **mid** is the id of the message to acknowledge.
+
+```json
+{
+    "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
+    "from": "858888d2-8e69-4910-9893-b979ddbc8c15",
+    "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
+    "jsongle": {
+        "action": "session-event",
+        "namespace": "muc",
+        "event": "ack",
+        "description": {
+            "acknowledged": "2021-04-29T16:07:10.476Z",
+            "mid": "858888d2-8e69-4910-9893-b979ddbc8c15",
+            "type": "received"
+        } 
+    }
+}
+```
+
+To acknowledge the reading of the message, the following action should be sent. **mid** is the id of the message to acknowledge.  
+
+```json
+{
+    "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
+    "from": "858888d2-8e69-4910-9893-b979ddbc8c15",
+    "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
+    "jsongle": {
+        "action": "session-event",
+        "namespace": "muc",
+        "event": "ack",
+        "description": {
+            "acknowledged": "2021-04-29T16:07:10.476Z",
+            "mid": "858888d2-8e69-4910-9893-b979ddbc8c15",
+            "type": "read"
+        } 
+    }
+}
+```
+
+### session-event - reaction
+
+A reaction can be sent to a message by using the action **session-event** with the event **reaction**.
+
+```json
+{
+    "id": "0d424e84-c3f0-48c4-85e4-1dd5a1922892",
+    "from": "858888d2-8e69-4910-9893-b979ddbc8c15",
+    "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
+    "jsongle": {
+        "action": "session-event",
+        "namespace": "muc",
+        "event": "reaction",
+        "description": {
+            "reacted": "2021-04-29T16:07:10.476Z",
+            "mid": "858888d2-8e69-4910-9893-b979ddbc8c15",
+            "type": "like"
+        } 
     }
 }
 ```
@@ -469,3 +575,4 @@ The **session-text** message is sent by a user when exchanging a text message an
     }
 }
 ```
+
