@@ -442,7 +442,7 @@ export default class JSONgle {
     /**
      * Answer to a query (set or get) from a recipient, a room or the server.
      * @param {string} to The id of the recipient, room or server
-     * @param {string} query The query to execute (eg: session-register)
+     * @param {string} query The query to execute (eg: muc-join)
      * @param {object} content The JSON content
      * @param {string} transaction A transaction id (a default one is generated if not set)
      * @return A Promise

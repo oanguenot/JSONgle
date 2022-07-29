@@ -353,7 +353,8 @@ The **session-custom** message is sent by the issuer or the responder when he wa
 
 ## iq-set
 
-The **iq-set** message is sent by the issuer to request a service. It contains a query and optionaly a JSON data.
+The **iq-set** message is sent by the issuer to request a service. It contains a query and optionally a JSON data.
+The query could anything managed on your server. Here in an example of using **session-join** which is used to join a room for a P2P call. 
 
 ```json
 {
@@ -362,7 +363,7 @@ The **iq-set** message is sent by the issuer to request a service. It contains a
     "to": "4419d0d1-5485-4115-a631-4fd4ba2734cb",
     "jsongle": {
         "action": "iq-set",
-        "query": "session-register",
+        "query": "session-join",
         "transaction": "0d424e84-c3f0-48c4",
         "description": { 
          }
@@ -422,7 +423,7 @@ The **ack** message is sent by the server to confirm the reception of a message 
     "jsongle": {
         "action": "ack",
         "status": "success",
-        "transaction": "0d424e84-c3f0-48c4",
+        "transaction": "0d424e84-c3f0-48c4"
     }
 }
 ```
@@ -567,9 +568,10 @@ The **session-text** message is sent by a user when exchanging a text message an
         "description": {
             "sent": "2021-04-29T16:07:10.476Z",
             "content": "the text message",
+            "namespace": "muc",
             "additionalContent": {
                 "property_1": "value_1",
-                "property_2": "value_2",
+                "property_2": "value_2"
             }
         } 
     }
